@@ -1,9 +1,59 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-/// Flutter code sample for [BottomNavigationBar].
+// FIREBASE
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() => runApp(const BottomNavigationBarExampleApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: "AIzaSyCphWQpqNdWuQFK6oJZW5Dn99R30i9VQs0",
+      authDomain: "recyclingapp-205a6.firebaseapp.com",
+      projectId: "recyclingapp-205a6",
+      storageBucket: "recyclingapp-205a6.appspot.com",
+      messagingSenderId: "269106504135",
+      appId: "1:269106504135:web:6399dc546fa4fe495f79e2",
+    ),
+  );
+
+  runApp(MyApp());
+}
+
+// SAMPLE TO READ/WRITE TO FIREBASE
+final firestore = FirebaseFirestore.instance;
+
+// Read data from Firestore
+Future<DocumentSnapshot> getData() async {
+  final docRef = firestore.collection('data').doc('documentId');
+  final snapshot = await docRef.get();
+  return snapshot;
+}
+
+// Write data to Firestore
+Future<void> setData(Map<String, dynamic> data) async {
+  final docRef = firestore.collection('data').doc('documentId');
+  await docRef.set(data);
+}
+
+/// Flutter code sample for [BottomNavigationBar].
+// Commented this out because its above with firebase
+//void main() => runApp(const BottomNavigationBarExampleApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      // App settings and navigation
+      home: BottomNavigationBarExample(), // Set your main screen here
+    );
+  }
+}
 
 class BottomNavigationBarExampleApp extends StatelessWidget {
   const BottomNavigationBarExampleApp({super.key});
@@ -24,13 +74,13 @@ class BottomNavigationBarExample extends StatefulWidget {
       _BottomNavigationBarExampleState();
 }
 
-  late GoogleMapController mapController;
+late GoogleMapController mapController;
 
-  const LatLng _center = LatLng(50.79869842529297, -1.0990136861801147);
+const LatLng _center = LatLng(50.79869842529297, -1.0990136861801147);
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-  }
+void _onMapCreated(GoogleMapController controller) {
+  mapController = controller;
+}
 
 class _BottomNavigationBarExampleState
     extends State<BottomNavigationBarExample> {
