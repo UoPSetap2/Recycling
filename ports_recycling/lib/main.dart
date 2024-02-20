@@ -1,11 +1,12 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 // FIREBASE
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'setupScreen.dart';
+import 'homeScreen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,8 +41,6 @@ Future<void> setData(Map<String, dynamic> data) async {
 }
 
 /// Flutter code sample for [BottomNavigationBar].
-// Commented this out because its above with firebase
-//void main() => runApp(const BottomNavigationBarExampleApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -50,7 +49,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       // App settings and navigation
-      home: BottomNavigationBarExample(), // Set your main screen here
+      home: SetupScreen(), // Set your main screen here
     );
   }
 }
@@ -74,13 +73,13 @@ class BottomNavigationBarExample extends StatefulWidget {
       _BottomNavigationBarExampleState();
 }
 
-late GoogleMapController mapController;
+  late GoogleMapController mapController;
 
-const LatLng _center = LatLng(50.79869842529297, -1.0990136861801147);
+  const LatLng _center = LatLng(50.79869842529297, -1.0990136861801147);
 
-void _onMapCreated(GoogleMapController controller) {
-  mapController = controller;
-}
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+  }
 
 class _BottomNavigationBarExampleState
     extends State<BottomNavigationBarExample> {
@@ -88,10 +87,7 @@ class _BottomNavigationBarExampleState
   static const TextStyle optionStyle =
       TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static final List<Widget> _widgetOptions = <Widget>[
-    const Text(
-      'Index 0: Home Screen',
-      style: optionStyle,
-    ),
+    const HomeScreen(),
     const GoogleMap(
       onMapCreated: _onMapCreated,
       initialCameraPosition: CameraPosition(
@@ -99,10 +95,7 @@ class _BottomNavigationBarExampleState
         zoom: 12.0,
       ),
     ),
-    const Text(
-      'Index 2: Information',
-      style: optionStyle,
-    ),
+    const SetupScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -131,12 +124,12 @@ class _BottomNavigationBarExampleState
             label: 'Map',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.info),
-            label: 'Information',
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
+        selectedItemColor: Colors.green,
         onTap: _onItemTapped,
       ),
     );
