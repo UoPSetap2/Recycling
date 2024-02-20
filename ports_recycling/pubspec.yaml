@@ -37,11 +37,8 @@ dependencies:
   cupertino_icons: ^1.0.2
   google_maps_flutter: ^2.5.3
   google_maps_flutter_web: ^0.5.4+3
-<<<<<<< Updated upstream
-=======
   cloud_firestore: ^4.14.0
   firebase_core: ^2.24.2
->>>>>>> Stashed changes
 
 dev_dependencies:
   flutter_test:

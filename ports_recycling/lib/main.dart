@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-<<<<<<< Updated upstream
-=======
 // FIREBASE
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -42,12 +40,8 @@ Future<void> setData(Map<String, dynamic> data) async {
   await docRef.set(data);
 }
 
->>>>>>> Stashed changes
 /// Flutter code sample for [BottomNavigationBar].
 
-<<<<<<< Updated upstream
-void main() => runApp(const BottomNavigationBarExampleApp());
-=======
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -59,7 +53,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
->>>>>>> Stashed changes
 
 class BottomNavigationBarExampleApp extends StatelessWidget {
   const BottomNavigationBarExampleApp({super.key});
