@@ -7,6 +7,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Initialize Firebase
+
+final FirebaseFirestore firestore = FirebaseFirestore.instance;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -19,25 +22,29 @@ Future<void> main() async {
       appId: "1:269106504135:web:6399dc546fa4fe495f79e2",
     ),
   );
+  // Call the addDocument function
+  await addDocument();
 
   runApp(MyApp());
 }
 
-// SAMPLE TO READ/WRITE TO FIREBASE
-final firestore = FirebaseFirestore.instance;
+// Firebase Testing
 
-// Read data from Firestore
-Future<DocumentSnapshot> getData() async {
-  final docRef = firestore.collection('data').doc('documentId');
-  final snapshot = await docRef.get();
-  return snapshot;
+Future<void> addDocument() async {
+  Map<String, dynamic> testData = {
+    'collectionDate': Timestamp.now(),
+    'postcode': '12345',
+    'userID': 'testUser'
+  };
+
+  try {
+    await firestore.collection('Users').add(testData);
+  } catch (e) {
+    print('Failed to add document: $e');
+  }
 }
 
-// Write data to Firestore
-Future<void> setData(Map<String, dynamic> data) async {
-  final docRef = firestore.collection('data').doc('documentId');
-  await docRef.set(data);
-}
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Flutter code sample for [BottomNavigationBar].
 // Commented this out because its above with firebase
