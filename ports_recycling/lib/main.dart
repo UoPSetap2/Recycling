@@ -1,17 +1,17 @@
 // ignore_for_file: prefer_const_constructors
-
+// Importing necessary libraries
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
-// FIREBASE
+import 'firebase.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Initialize Firebase
-
-final FirebaseFirestore firestore = FirebaseFirestore.instance;
+// Main function
 Future<void> main() async {
+  // Ensuring that widget binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initializing Firebase app with given options
   await Firebase.initializeApp(
     options: FirebaseOptions(
       apiKey: "AIzaSyCphWQpqNdWuQFK6oJZW5Dn99R30i9VQs0",
@@ -22,29 +22,17 @@ Future<void> main() async {
       appId: "1:269106504135:web:6399dc546fa4fe495f79e2",
     ),
   );
-  // Call the addDocument function
-  await addDocument();
 
+  // Running the app
   runApp(MyApp());
+  // Adding a user for testing
+  await addUser(Timestamp.now(), 'SO17 1BJ', '1');
+  // Adding a collection point for testing
+  await addCollectionPoint(
+      GeoPoint(50.79869842529297, -1.0990136861801147), '1', 'Recycling');
+  // Adding bin information for testing
+  await addBinInformation('Plastic', ['Bottles', 'Bags', 'Containers']);
 }
-
-// Firebase Testing
-
-Future<void> addDocument() async {
-  Map<String, dynamic> testData = {
-    'collectionDate': Timestamp.now(),
-    'postcode': '12345',
-    'userID': 'testUser'
-  };
-
-  try {
-    await firestore.collection('Users').add(testData);
-  } catch (e) {
-    print('Failed to add document: $e');
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Flutter code sample for [BottomNavigationBar].
 // Commented this out because its above with firebase
