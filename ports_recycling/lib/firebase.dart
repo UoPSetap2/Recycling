@@ -100,7 +100,7 @@ Future<void> addRecyclingPointsFromCSV() async {
 - Function to pull the recycling points from the database, used in the 'mapScreen.dart' file
   - Needs to loop through all the points, calling the '_addMarker' function on each one, see line 49 in 'mapScreen.dart' file for more info.
 
-THIS HAS BEEN CALLED DO NOT USE AGAIN
+THIS HAS BEEN CALLED ALREADY IN THE 'mapScreen.dart' FILE, NO NEED TO CALL IT AGAIN UNLESS ADDING MORE
 
   try {
     // Call the addRecyclingPointsFromCSV function
@@ -146,21 +146,169 @@ Future<List<Marker>> getMarkersFromFirestore() async {
   // Return the list of markers
   return markers;
 }
+
 /*
 - Function to input the collection dates
   - 1 collection with each document representing a postcode, there are 2 fields within the document, 1 is a list of recycling collection dates, the other is a list of general waste collection dates.
+  collection made, need csv with info 
 
+  
+*/
+Future<void> addCollectionDatesFromCSV(String csvFile) async {
+  // Load the CSV file
+  String csvData = await rootBundle.loadString(csvFile);
+
+  // Parse the CSV data
+  List<List<dynamic>> rows = const CsvToListConverter().convert(csvData);
+
+  // Loop through the rows
+  for (List<dynamic> row in rows) {
+    // Get the data for this row
+    String postcode = row[0];
+    List<DateTime> recyclingDates = (row[1] as String)
+        .split(',')
+        .map((date) => DateTime.parse(date))
+        .toList();
+    List<DateTime> wasteDates = (row[2] as String)
+        .split(',')
+        .map((date) => DateTime.parse(date))
+        .toList();
+
+    // Create a map of the data
+    Map<String, dynamic> data = {
+      'recyclingDates': recyclingDates
+          .map((date) =>
+              DateTime(date.year, date.month, date.day).toIso8601String())
+          .toList(),
+      'wasteDates': wasteDates
+          .map((date) =>
+              DateTime(date.year, date.month, date.day).toIso8601String())
+          .toList(),
+    };
+
+    // Try to add the data to Firestore
+    try {
+      await FirebaseFirestore.instance
+          .collection('CollectionDates')
+          .doc(postcode)
+          .set(data);
+      print('Successfully added collection dates for $postcode.');
+    } catch (e) {
+      print('Failed to add collection dates: $e');
+    }
+  }
+}
+
+/*
 - Function to pull the collection dates
  - Needs to use the user's set postcode and pull the document for that postcode, then display the dates within that document
  - Possibly need a sperate function to check the user has a set postcode, if not then the frontend should go back and ask for one
+*/
 
+// Need to sort out how to best acquire postcode from user
+Future<Map<String, List<DateTime>>> getCollectionDates(String postcode) async {
+  // Try to get the document for the postcode
+  DocumentSnapshot doc = await FirebaseFirestore.instance
+      .collection('CollectionDates')
+      .doc(postcode)
+      .get();
+
+  // Check if the document exists
+  if (!doc.exists) {
+    throw Exception('No collection dates found for postcode $postcode.');
+  }
+
+  // Get the collection dates
+  List<DateTime> recyclingDates = (doc['recyclingDates'] as List)
+      .map((date) => DateTime.parse(date))
+      .toList();
+  List<DateTime> wasteDates =
+      (doc['wasteDates'] as List).map((date) => DateTime.parse(date)).toList();
+
+  // Return the collection dates
+  return {
+    'recyclingDates': recyclingDates,
+    'wasteDates': wasteDates,
+  };
+}
+
+/*
 - Function to input materials/items that can be recycled
   - A collection for materials, 1 document per material that stores a description, can it be recycled (boolean), how to dispose of it and/or what bin it goes in
+*/
+//Need a csv
+Future<void> addRecyclingMaterialsFromCSV(String csvFile) async {
+  // Load the CSV file
+  String csvData = await rootBundle.loadString(csvFile);
 
+  // Parse the CSV data
+  List<List<dynamic>> rows = const CsvToListConverter().convert(csvData);
+
+  // Loop through the rows
+  for (List<dynamic> row in rows) {
+    // Get the data for this row
+    String materialName = row[0];
+    String description = row[1];
+    bool canBeRecycled = row[2].toLowerCase() == 'true';
+    String disposalInfo = row[3];
+
+    // Create a map of the data
+    Map<String, dynamic> data = {
+      'description': description,
+      'canBeRecycled': canBeRecycled,
+      'disposalInfo': disposalInfo,
+    };
+
+    // Try to add the data to Firestore
+    try {
+      await FirebaseFirestore.instance
+          .collection('RecyclingMaterials')
+          .doc(materialName)
+          .set(data);
+      print('Successfully added recycling material $materialName.');
+    } catch (e) {
+      print('Failed to add recycling material: $e');
+    }
+  }
+}
+
+/*
 - Function to pull materials/items that can be recycled
    - The user uses this to search materials/items. Needs to take whatever they search and return the document for the material that matches
    - This would look great with some kind of autocomplete search function, but not yet sure how to implement this
+*/
+Future<DocumentSnapshot> getRecyclingMaterial(String searchTerm) async {
+  // Try to get the document for the material
+  DocumentSnapshot doc = await FirebaseFirestore.instance
+      .collection('RecyclingMaterials')
+      .doc(searchTerm)
+      .get();
 
+  // Check if the document exists
+  if (!doc.exists) {
+    throw Exception('No material found for search term $searchTerm.');
+  }
+
+  // Return the document
+  return doc;
+}
+
+// Example function to use the getRecyclingMaterial function
+Future<void> fetchRecyclingMaterial() async {
+  String searchTerm = 'Plastic Bottle'; // Replace with the user's search term
+  try {
+    DocumentSnapshot materialDoc = await getRecyclingMaterial(searchTerm);
+    print('Material: ${materialDoc.id}');
+    print('Description: ${materialDoc['description']}');
+    print('Can be recycled: ${materialDoc['canBeRecycled']}');
+    print('Disposal info: ${materialDoc['disposalInfo']}');
+  } catch (error) {
+    print('Failed to get material: $error');
+  }
+}
+
+
+/*
 - Function to input user/device home address and postcode - This is only to input their home address, if the user does not tick home address then the inputted address will be saved locally and forgotten when the app is closed.
   - On the startup screen, this function takes the inputted address (Seperates the fields, especially postcode needs to be seperate)
   - It would be good to find the latitude and longitude coordinates of the address so we can pin their address to the map. 
