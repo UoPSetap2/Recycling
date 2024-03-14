@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
-
+import 'firebase.dart';
 import 'main.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -29,40 +29,36 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-void _onMapCreated(GoogleMapController controller) async {
-  String csv = "assets/RecyclingPoints.csv";
-  String fileData = await rootBundle.loadString(csv);
-
-  List<String> rows = fileData.split("\n");
-
-  for (int i = 1; i < rows.length; i++) {
-    String row = rows[i];
-    List<String> itemInRow = row.split(",");
-
-    // 16 is the recycling center itself
-    if (i != 16) {
-      _addMarker(LatLng(double.parse(itemInRow[1]), double.parse(itemInRow[2])), "Recycling Point ${itemInRow[0]}", itemInRow[3], BitmapDescriptor.defaultMarker);
-    }
+  void _onMapCreated(GoogleMapController controller) async {
+    mapController = controller;
+    await addMarkersToMap();
   }
 
-  //This adds the recycling center to the map in green, with the address as the description
-  _addMarker(const LatLng(50.839080810546875, -1.0951703786849976), "Recycling Center", "Paulsgrove Portway,\nPort Solent,\nPO6 4UD", BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen));
-
-  setState(() {
-    mapController = controller;
-  });
-}
-
-  void _addMarker(LatLng position, String title, String properties, BitmapDescriptor colour) {
+  void _addMarker(LatLng position, String title, String properties,
+      BitmapDescriptor colour) {
     markers.add(
       Marker(
         markerId: MarkerId(position.toString()),
         position: position,
-        infoWindow: InfoWindow(
-          title: title,
-          snippet: properties),
+        infoWindow: InfoWindow(title: title, snippet: properties),
         icon: colour,
       ),
     );
+  }
+
+  addMarkersToMap() async {
+    try {
+      List<Marker> newMarkers = await getMarkersFromFirestore();
+      for (Marker marker in newMarkers) {
+        _addMarker(marker.position, marker.infoWindow.title ?? '',
+            marker.infoWindow.snippet ?? '', marker.icon);
+      }
+      print('Successfully added markers from Firestore.');
+
+      // Call setState to update the map with the new markers
+      setState(() {});
+    } catch (e) {
+      print('Failed to add markers from Firestore: $e');
+    }
   }
 }

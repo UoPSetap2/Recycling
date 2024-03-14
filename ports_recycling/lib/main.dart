@@ -9,7 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'setupScreen.dart';
 import 'homeScreen.dart';
-
+import 'mapScreen.dart';
 
 Future<void> main() async {
   // Ensuring that widget binding is initialized
@@ -29,13 +29,16 @@ Future<void> main() async {
 
   // Running the app
   runApp(MyApp());
-  // Adding a user for testing
-  await addUser(Timestamp.now(), 'SO17 1BJ', '1');
-  // Adding a collection point for testing
-  await addCollectionPoint(
-      GeoPoint(50.79869842529297, -1.0990136861801147), '1', 'Recycling');
-  // Adding bin information for testing
-  await addBinInformation('Plastic', ['Bottles', 'Bags', 'Containers']);
+
+  /* Testing Functions
+   Adding a user for testing
+   await addUser(Timestamp.now(), 'SO17 1BJ', '1');
+   Adding a collection point for testing
+   await addCollectionPoint(
+   GeoPoint(50.79869842529297, -1.0990136861801147), '1', 'Recycling');
+   Adding bin information for testing
+   await addBinInformation('Plastic', ['Bottles', 'Bags', 'Containers']);
+  */
 }
 
 /// Flutter code sample for [BottomNavigationBar].
