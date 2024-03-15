@@ -1,10 +1,13 @@
 // Importing Firebase libraries
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:csv/csv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'mapScreen.dart';
+import 'package:device_info/device_info.dart';
+import 'package:geocoding/geocoding.dart';
 
 // Initializing Firebase
 final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -307,20 +310,155 @@ Future<void> fetchRecyclingMaterial() async {
   }
 }
 
-
 /*
 - Function to input user/device home address and postcode - This is only to input their home address, if the user does not tick home address then the inputted address will be saved locally and forgotten when the app is closed.
   - On the startup screen, this function takes the inputted address (Seperates the fields, especially postcode needs to be seperate)
   - It would be good to find the latitude and longitude coordinates of the address so we can pin their address to the map. 
   - A collection for addresses, each document is every MAC address that has used the system, within each document is the address, coordinates of the address and if notifications are enabled (boolean)
   - This also needs a mechanism to update the home address and possibly delete it.
+*/
+// Gets unique decive id
 
+Future<String> getDeviceId() async {
+  final DeviceInfoPlugin deviceInfoPlugin = new DeviceInfoPlugin();
+  if (Platform.isAndroid) {
+    var build = await deviceInfoPlugin.androidInfo;
+    return build.androidId; //UUID for Android
+  } else if (Platform.isIOS) {
+    var data = await deviceInfoPlugin.iosInfo;
+    return data.identifierForVendor; //UUID for iOS
+  } else {
+    throw Exception('Platform not supported');
+  }
+}
+
+// Example implementation
+Future<void> addDeviceIdToAddresses(String address, double latitude,
+    double longitude, bool notifications) async {
+  // Get the device ID
+  String deviceId = await getDeviceId();
+
+  // Get a reference to the document with the device ID
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+
+  // Check if the document exists
+  DocumentSnapshot doc = await docRef.get();
+  if (!doc.exists) {
+    // If the document does not exist, add it
+    GeoPoint location = GeoPoint(latitude, longitude);
+    Map<String, dynamic> data = {
+      'address':
+          address, // This should be provided by the user through the frontend
+      'location':
+          location, // This should be the user's location, which can be obtained through the frontend
+      'notifications':
+          notifications, // This should be provided by the user through the frontend
+    };
+    await docRef.set(data);
+  }
+}
+
+// To retrieve user info
+Future<DocumentSnapshot> getUserAddressData() async {
+  // Get the device ID
+  String deviceId = await getDeviceId();
+
+  // Get a reference to the document with the device ID
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+
+  // Try to get the document
+  DocumentSnapshot doc = await docRef.get();
+
+  // Check if the document exists
+  if (!doc.exists) {
+    throw Exception('No address data found for device ID $deviceId.');
+  }
+
+  // Return the document
+  return doc;
+}
+
+// Delete user address
+Future<void> deleteAddressData() async {
+  // Get the device ID
+  String deviceId = await getDeviceId();
+
+  // Get a reference to the document with the device ID
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+
+  // Delete the document
+  await docRef.delete();
+}
+
+/*
 - Function to pull user/device home address and postcode
   - Will need to check if there is an address set, this gets used on startup and if no address is set then the startup screen is shown, if there is this will be skipped
   - Postcode needs to be pulled on the collection dates screen
   - Coordinates need to be pulled on the map
   - If there is no address set, the user needs to be asked for one before they can see collection dates
+*/
+// Checks if user has address set, can be used on frontend to navigate screens
+Future<bool> hasAddressSet() async {
+  // Get the device ID
+  String deviceId = await getDeviceId();
 
+  // Get a reference to the document with the device ID
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+
+  // Try to get the document
+  DocumentSnapshot doc = await docRef.get();
+
+  // Check if the document exists and the 'address' field is not null or empty
+  if (doc.exists && doc['address'] != null && doc['address'].isNotEmpty) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// Is there a collection dates screen? I don't know what needs to be done by pulls postcode on collection dates screen? This function just gets the postcode from the database for a user
+Future<String> getPostcodeFromDeviceId() async {
+  // Get the device ID
+  String deviceId = await getDeviceId();
+
+  // Get a reference to the document with the device ID
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+
+  // Try to get the document
+  DocumentSnapshot doc = await docRef.get();
+
+  // Check if the document exists
+  if (!doc.exists) {
+    throw Exception('No address data found for device ID $deviceId.');
+  }
+
+  // Get the location from the document data
+  GeoPoint location = doc['location'] as GeoPoint;
+
+  // Perform reverse geocoding
+  List<Placemark> placemarks =
+      await placemarkFromCoordinates(location.latitude, location.longitude);
+
+  // Check if any placemarks were found
+  if (placemarks.isEmpty) {
+    throw Exception('No placemarks found for location $location.');
+  }
+
+  // Check if the postcode is not null
+  String? postcode = placemarks.first.postalCode;
+  if (postcode == null) {
+    throw Exception('No postcode found for location $location.');
+  }
+
+  // Return the postcode
+  return postcode;
+}
+/*
 
 
 There might be more needed, let me know if you think of anything else.
