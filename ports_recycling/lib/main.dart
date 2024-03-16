@@ -3,12 +3,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:ports_recycling/mapScreen.dart';
 import 'firebase.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'setupScreen.dart';
 import 'homeScreen.dart';
-
+import 'mapScreen.dart';
 
 Future<void> main() async {
   // Ensuring that widget binding is initialized
@@ -28,13 +29,16 @@ Future<void> main() async {
 
   // Running the app
   runApp(MyApp());
-  // Adding a user for testing
-  await addUser(Timestamp.now(), 'SO17 1BJ', '1');
-  // Adding a collection point for testing
-  await addCollectionPoint(
-      GeoPoint(50.79869842529297, -1.0990136861801147), '1', 'Recycling');
-  // Adding bin information for testing
-  await addBinInformation('Plastic', ['Bottles', 'Bags', 'Containers']);
+
+  /* Testing Functions
+   Adding a user for testing
+   await addUser(Timestamp.now(), 'SO17 1BJ', '1');
+   Adding a collection point for testing
+   await addCollectionPoint(
+   GeoPoint(50.79869842529297, -1.0990136861801147), '1', 'Recycling');
+   Adding bin information for testing
+   await addBinInformation('Plastic', ['Bottles', 'Bags', 'Containers']);
+  */
 }
 
 /// Flutter code sample for [BottomNavigationBar].
@@ -70,14 +74,6 @@ class BottomNavigationBarExample extends StatefulWidget {
       _BottomNavigationBarExampleState();
 }
 
-  late GoogleMapController mapController;
-
-  const LatLng _center = LatLng(50.79869842529297, -1.0990136861801147);
-
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-  }
-
 class _BottomNavigationBarExampleState
     extends State<BottomNavigationBarExample> {
   int _selectedIndex = 0;
@@ -85,13 +81,7 @@ class _BottomNavigationBarExampleState
       TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static final List<Widget> _widgetOptions = <Widget>[
     const HomeScreen(),
-    const GoogleMap(
-      onMapCreated: _onMapCreated,
-      initialCameraPosition: CameraPosition(
-        target: _center,
-        zoom: 12.0,
-      ),
-    ),
+    MapScreen(),
     const SetupScreen(),
   ];
 
