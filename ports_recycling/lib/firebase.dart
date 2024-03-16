@@ -82,6 +82,7 @@ Future<void> addRecyclingPoint(String description, GeoPoint location) async {
 }
 
 // Function to loop through the recycling points and add them to the database
+// Could change so that it checks whether there is a point already
 
 Future<void> addRecyclingPointsFromCSV() async {
   // Load and parse the CSV file
@@ -155,6 +156,7 @@ Future<List<Marker>> getMarkersFromFirestore() async {
   - 1 collection with each document representing a postcode, there are 2 fields within the document, 1 is a list of recycling collection dates, the other is a list of general waste collection dates.
   collection made, need csv with info 
 
+// NEEDS CSV FILE
   
 */
 Future<void> addCollectionDatesFromCSV(String csvFile) async {
@@ -296,20 +298,6 @@ Future<DocumentSnapshot> getRecyclingMaterial(String searchTerm) async {
   return doc;
 }
 
-// Example function to use the getRecyclingMaterial function
-Future<void> fetchRecyclingMaterial() async {
-  String searchTerm = 'Plastic Bottle'; // Replace with the user's search term
-  try {
-    DocumentSnapshot materialDoc = await getRecyclingMaterial(searchTerm);
-    print('Material: ${materialDoc.id}');
-    print('Description: ${materialDoc['description']}');
-    print('Can be recycled: ${materialDoc['canBeRecycled']}');
-    print('Disposal info: ${materialDoc['disposalInfo']}');
-  } catch (error) {
-    print('Failed to get material: $error');
-  }
-}
-
 /*
 - Function to input user/device home address and postcode - This is only to input their home address, if the user does not tick home address then the inputted address will be saved locally and forgotten when the app is closed.
   - On the startup screen, this function takes the inputted address (Seperates the fields, especially postcode needs to be seperate)
@@ -420,6 +408,7 @@ Future<bool> hasAddressSet() async {
   }
 }
 
+// Cannot do this it is only IOS compatible
 // Is there a collection dates screen? I don't know what needs to be done by pulls postcode on collection dates screen? This function just gets the postcode from the database for a user
 Future<String> getPostcodeFromDeviceId() async {
   // Get the device ID
