@@ -29,16 +29,6 @@ Future<void> main() async {
 
   // Running the app
   runApp(MyApp());
-
-  /* Testing Functions
-   Adding a user for testing
-   await addUser(Timestamp.now(), 'SO17 1BJ', '1');
-   Adding a collection point for testing
-   await addCollectionPoint(
-   GeoPoint(50.79869842529297, -1.0990136861801147), '1', 'Recycling');
-   Adding bin information for testing
-   await addBinInformation('Plastic', ['Bottles', 'Bags', 'Containers']);
-  */
 }
 
 /// Flutter code sample for [BottomNavigationBar].
