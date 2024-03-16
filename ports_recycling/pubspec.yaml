@@ -40,6 +40,9 @@ dependencies:
   google_maps_webservice: ^0.0.19
   cloud_firestore: ^4.14.0
   firebase_core: ^2.24.2
+  csv: ^6.0.0
+  device_info: ^2.0.3
+  geocoding: ^3.0.0
 
 
 dev_dependencies:
