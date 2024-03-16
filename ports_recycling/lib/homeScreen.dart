@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:ports_recycling/binInfo.dart';
+import 'package:ports_recycling/colDatesScreen.dart';
+import 'package:ports_recycling/itemSearch.dart';
+import 'package:ports_recycling/rciScreen.dart';
+import 'package:ports_recycling/whatCanIRecycle.dart';
 import 'main.dart';
 
 
@@ -57,7 +62,12 @@ return WillPopScope(
               padding: EdgeInsets.fromLTRB(10,25,10,10),
               child: 
                 MaterialButton(
-                  onPressed: () {},
+                  onPressed: () {                
+                     Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CollDates()),
+                  );
+                  },
                   color: Colors.green,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -99,7 +109,12 @@ return WillPopScope(
               padding: EdgeInsets.fromLTRB(10,25,10,10),
               child: 
                 MaterialButton(
-                  onPressed: () {},
+                  onPressed: () {                
+                     Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const WCIRScreen()),
+                  );
+                  },
                   color: Colors.green,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -145,7 +160,12 @@ return WillPopScope(
               padding: EdgeInsets.fromLTRB(10,40,10,10),
               child: 
             MaterialButton(
-                  onPressed: () {},
+                  onPressed: () {                
+                     Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const BinInfo()),
+                  );
+                  },
                   color: Colors.green,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -187,7 +207,12 @@ return WillPopScope(
               padding: EdgeInsets.fromLTRB(10,40,10,10),
               child: 
             MaterialButton(
-                  onPressed: () {},
+                  onPressed: () {                
+                     Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const RCIScreen()),
+                  );
+                  },
                   color: Colors.green,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -232,7 +257,12 @@ return WillPopScope(
               padding: EdgeInsets.fromLTRB(10,40,10,0),
               child: 
                 MaterialButton(
-                  onPressed: () {},
+                  onPressed: () {                
+                     Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ItemSearch()),
+                  );
+                  },
                   color: Colors.green,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
