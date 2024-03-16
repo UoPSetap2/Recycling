@@ -5,7 +5,6 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:csv/csv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:device_info/device_info.dart';
-import 'package:geocoding/geocoding.dart';
 import 'setupScreen.dart';
 
 // Initializing Firebase
