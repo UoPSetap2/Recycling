@@ -197,9 +197,28 @@ MaterialButton(
     PlacesDetailsResponse response = await places.getDetailsByPlaceId(placeId);
     final location = response.result.geometry?.location;
 
-    // You can use the location.latitude and location.longitude to do further processing
-    print(
-        'Selected address: ${response.result.formattedAddress} (${location?.lat}, ${location?.lng})');
+    // The following dissects the selected address into each line, also providing the coordinates and postcode
+        final formattedAddress = response.result.formattedAddress;
+        final lines = formattedAddress?.split(', ');
+        final addressLines = lines?.sublist(0, lines.length - 1);
+        var postcode = addressLines!.last;
+        List<String> splitPostcode = postcode.split(' ');
+        postcode = '';
+        for (int i = 1; i < splitPostcode.length; i++) {
+          postcode = postcode + splitPostcode[i];
+          if (i == 1) {
+            postcode += ' ';
+          } 
+        }
+
+        print('Selected address:');
+        for (int i = 0; i < addressLines.length - 1; i++) {
+          print(addressLines[i]);
+        }
+        print('Postcode: $postcode');
+        print('Latitude: ${location?.lat}');
+        print('Longitude: ${location?.lng}');
+
   }
 }
 
