@@ -288,3 +288,47 @@ Future<bool> deleteAddressData(String deviceId) async {
     return false;
   }
 }
+
+// Gets collection dates for a given device ID
+Future<Map<String, dynamic>?> getCollectionDatesForDevice(
+    String deviceId) async {
+  // I'm getting a reference to the Firestore document with the device ID
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+
+  // I'm trying to get the document
+  DocumentSnapshot doc = await docRef.get();
+
+  // I'm checking if the document exists and the 'postcode' field is not null
+  if (!doc.exists || (doc.data() as Map<String, dynamic>)['postcode'] == null) {
+    // If the document does not exist or the 'postcode' field is null, I'm printing a message and returning null
+    print('No document found with this device ID or no postcode set.');
+    return null;
+  }
+
+  // I'm getting the postcode from the document
+  String postcode = (doc.data() as Map<String, dynamic>)['postcode'];
+
+  // I'm getting a reference to the Firestore collection 'CollectionDates'
+  CollectionReference collectionRef =
+      FirebaseFirestore.instance.collection('CollectionDates');
+
+  // I'm trying to get the documents where the 'postcode' field matches the given postcode
+  QuerySnapshot querySnapshot =
+      await collectionRef.where('postcode', isEqualTo: postcode).get();
+
+  // I'm checking if any documents were found
+  if (querySnapshot.docs.isEmpty) {
+    // If no documents were found, I'm printing a message and returning null
+    print('No collection dates found for this postcode.');
+    return null;
+  } else {
+    // If documents were found, I'm returning the 'recyclingDates' and 'wasteDates' fields of the first document
+    Map<String, dynamic> data =
+        querySnapshot.docs.first.data() as Map<String, dynamic>;
+    return {
+      'recyclingDates': data['recyclingDates'],
+      'wasteDates': data['wasteDates'],
+    };
+  }
+}
