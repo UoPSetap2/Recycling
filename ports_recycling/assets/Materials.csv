@@ -1,0 +1,11 @@
+materialName,canBeRecycled,disposalInfo
+Plutonium-239,FALSE,Fly Tipping
+The Rosetta Stone,FALSE,British Museum
+Polystyrene foam (Styrofoam),FALSE,Can be recycled at recyling centre but not at home
+Plastic bags,FALSE,Usually can be recycled at local supermarkets 
+PVC (Polyvinyl Chloride) plastics,FALSE,Can be recycled at recyling centre but not at home
+"Paper (newspapers, magazines, etc.)",TRUE,Can be recycled at home
+Cardboard,TRUE,Can be recycled at home
+Glass bottles and jars,TRUE,Bottle bank
+Aluminium cans,TRUE,Can be recycled at home
+"Plastic containers (e.g., yogurt pots)",TRUE,Can be recycled at home
