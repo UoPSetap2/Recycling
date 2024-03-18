@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ports_recycling/firebase.dart';
 
 import 'main.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,11 @@ class _SetupScreenState extends State<SetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    late String address;
+    late bool homeAddress;
+    late bool notifications;
+
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
@@ -67,7 +73,9 @@ class _SetupScreenState extends State<SetupScreen> {
                     child: AddressSearchBar(
                       controller: searchController,
                       onSelected: (placeId) {
-                        selectAddress(placeId!);
+                        address = placeId!;
+                        // Instead of calling select address, display the selected address here
+                        selectAddress(placeId);
                       },
                     ),
                   ),
@@ -93,7 +101,11 @@ class _SetupScreenState extends State<SetupScreen> {
                         Flexible(
                           flex: 1,
                           fit: FlexFit.tight,
-                          child: SwitchExample(),
+                          child: SwitchExample(
+                                  onChanged: (value) {
+                                    homeAddress = value;
+                                  },
+                          ),
                         ),
                       ],
                     ),
@@ -118,9 +130,14 @@ class _SetupScreenState extends State<SetupScreen> {
                           ),
                         ),
                         Flexible(
-                            flex: 1,
-                            fit: FlexFit.tight,
-                            child: SwitchExample()),
+                          flex: 1,
+                          fit: FlexFit.tight,
+                          child: SwitchExample(
+                                  onChanged: (value) {
+                                    notifications = value;
+                                  },
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -128,6 +145,10 @@ class _SetupScreenState extends State<SetupScreen> {
                     padding: EdgeInsets.fromLTRB(0, 160, 0, 0),
                     child: MaterialButton(
                       onPressed: () {
+
+                        // Save address info to DB
+                        addDeviceIdToAddresses(address, notifications);
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -267,7 +288,9 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
 }
 
 class SwitchExample extends StatefulWidget {
-  const SwitchExample({super.key});
+  final ValueChanged<bool>? onChanged;
+
+  const SwitchExample({Key? key, this.onChanged}) : super(key: key);
 
   @override
   State<SwitchExample> createState() => _SwitchExampleState();
@@ -287,6 +310,9 @@ class _SwitchExampleState extends State<SwitchExample> {
         setState(() {
           light = value;
         });
+        if (widget.onChanged != null) {
+          widget.onChanged!(value);
+        }
       },
     );
   }
@@ -335,10 +361,13 @@ Future<Map<String, dynamic>?> selectAddress(String placeId) async {
     }
   }
 
+  print(postcode);
+
   // I'm returning a map containing the formatted address, postcode, and location
   return {
     'formattedAddress': formattedAddress,
     'postcode': postcode,
     'location': GeoPoint(location.lat, location.lng),
   };
+
 }
