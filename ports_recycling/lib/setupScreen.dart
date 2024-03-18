@@ -19,14 +19,13 @@ class _SetupScreenState extends State<SetupScreen> {
   late GoogleMapController mapController;
   TextEditingController searchController = TextEditingController();
   late PlacesAutocompleteResponse searchResults;
+  String? address = "";
+  late bool homeAddress;
+  late bool notifications;
+  String? formattedAddress = "";
 
   @override
   Widget build(BuildContext context) {
-
-    late String address;
-    late bool homeAddress;
-    late bool notifications;
-
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
@@ -57,7 +56,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   const Padding(
                     padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
                     child: Text(
-                      "Search for your address",
+                      "Enter your address",
                       textAlign: TextAlign.start,
                       overflow: TextOverflow.clip,
                       style: TextStyle(
@@ -69,16 +68,66 @@ class _SetupScreenState extends State<SetupScreen> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(0, 0, 0, 50),
-                    child: AddressSearchBar(
-                      controller: searchController,
-                      onSelected: (placeId) {
-                        address = placeId!;
-                        // Instead of calling select address, display the selected address here
-                        selectAddress(placeId);
-                      },
-                    ),
+                    padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                    child: address == ""
+                        ? AddressSearchBar(
+                            controller: searchController,
+                            onSelected: (placeId) {
+                              setState(() {
+                                searchController.clear();
+                                address = placeId!;
+                              });
+
+                              getStringAddress(address!).then((value) {
+                                setState(() {
+                                  formattedAddress = value;
+                                });
+                              });
+                              // Instead of calling select address, display the selected address here
+                              // selectAddress(address);
+                              
+                              
+                            },
+                          )
+                        : Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child:
+                            Text(
+                            formattedAddress!,
+                            textAlign: TextAlign.start,
+                            overflow: TextOverflow.clip,
+                            style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontStyle: FontStyle.normal,
+                              fontSize: 18,
+                              color: Color(0xff000000),
+                            ),
+                          ),),
+                          Expanded(
+                            flex: 1,
+                            child:
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                address = "";
+                              });
+                              print("Edit");
+                            },
+                            child: Text(
+                              "Edit",
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: 16),
+                            ),
+                          ),),
+                          ],
+                        )
+                        
+                        
                   ),
+
                   Padding(
                     padding: EdgeInsets.fromLTRB(0, 0, 0, 20),
                     child: Row(
@@ -142,12 +191,12 @@ class _SetupScreenState extends State<SetupScreen> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(0, 160, 0, 0),
+                    padding: EdgeInsets.fromLTRB(0, 80, 0, 0),
                     child: MaterialButton(
                       onPressed: () {
 
                         // Save address info to DB
-                        addDeviceIdToAddresses(address, notifications);
+                        addDeviceIdToAddresses(address!, notifications);
 
                         Navigator.push(
                           context,
@@ -369,5 +418,25 @@ Future<Map<String, dynamic>?> selectAddress(String placeId) async {
     'postcode': postcode,
     'location': GeoPoint(location.lat, location.lng),
   };
+
+}
+
+Future<String?> getStringAddress(String placeId) async {
+  // I'm creating a GoogleMapsPlaces object with my API key
+  final places =
+      GoogleMapsPlaces(apiKey: 'AIzaSyDFTy0iz-fmqTKm8wMkOYuVTgK4eEPr94c');
+
+  // I'm using the GoogleMapsPlaces object to get the details of the place with the given ID
+  PlacesDetailsResponse response = await places.getDetailsByPlaceId(placeId);
+
+  // I'm getting the location (latitude and longitude) of the place
+  final location = response.result.geometry?.location;
+
+  // If the location is null (which means the place doesn't have a location), I return an empty string
+  if (location == null) {
+    return "";
+  }
+  // I'm getting the formatted address of the place
+  return response.result.formattedAddress?.replaceAll(', ', ',\n');
 
 }
