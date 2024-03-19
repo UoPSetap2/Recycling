@@ -328,6 +328,9 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
       query,
       language: 'en',
       types: ['address'],
+      components: [Component(Component.country, 'GB')],
+      location: Location(lat: 50.819767, lng: -1.087976), // Bias results towards Portsmouth
+      radius: 5000, // This means only results within 5km of Portsmouth are shown (Remove these 2 lines to include whole of UK)
     );
 
     setState(() {
