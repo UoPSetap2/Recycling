@@ -11,6 +11,8 @@ import 'setupScreen.dart';
 import 'homeScreen.dart';
 import 'mapScreen.dart';
 
+bool splashScreen = true;
+
 Future<void> main() async {
   // Ensuring that widget binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +29,10 @@ Future<void> main() async {
     ),
   );
 
+  if (await getFormattedAddress(await getDeviceId()) != null) {
+    splashScreen = false;
+  }
+
   // Running the app
   runApp(MyApp());
 }
@@ -40,7 +46,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       // App settings and navigation
-      home: SetupScreen(), // Set your main screen here
+      home: splashScreen ? SetupScreen() : BottomNavigationBarExample(),
     );
   }
 }

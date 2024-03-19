@@ -152,6 +152,32 @@ Future<void> addRecyclingMaterialsFromCSV() async {
   print('Finished adding materials.');
 }
 
+// Function to query the database and return a List<String> of the title of every document
+Future<List<String>> getDocumentTitles() async {
+  // Get a reference to the collection
+  CollectionReference recyclingMaterials =
+      FirebaseFirestore.instance.collection('RecyclingMaterials');
+
+  // Get all documents in the collection
+  QuerySnapshot querySnapshot = await recyclingMaterials.get();
+
+  // Create a list to hold the titles
+  List<String> titles = [];
+
+  // Loop through the documents
+  for (QueryDocumentSnapshot doc in querySnapshot.docs) {
+    // Get the title for this document
+    String title = doc.id;
+
+    // Add the title to the list
+    titles.add(title);
+  }
+
+  // Return the list of titles
+  return titles;
+}
+
+
 // Function for searching materials
 Future<Object?> getRecyclingMaterial(String materialName) async {
   // Try to get the document for the material
@@ -167,7 +193,14 @@ Future<Object?> getRecyclingMaterial(String materialName) async {
   }
 
   // Return the document's data
-  return doc.data();
+  // return doc.data();
+
+  Map<String, dynamic> data =
+    doc.data() as Map<String, dynamic>;
+    return {
+      'canBeRecycled': data['canBeRecycled'],
+      'disposalInfo': data['disposalInfo'],
+    };
 }
 
 // This function retrieves the device ID
@@ -308,27 +341,39 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
 
   // I'm getting the postcode from the document
   String postcode = (doc.data() as Map<String, dynamic>)['postcode'];
+  print(postcode);
 
-  // I'm getting a reference to the Firestore collection 'CollectionDates'
-  CollectionReference collectionRef =
-      FirebaseFirestore.instance.collection('CollectionDates');
+  // I'm getting a reference to the Firestore document for the correct postcode
+  DocumentReference postcodeDoc =
+      FirebaseFirestore.instance.collection('CollectionDates').doc(postcode);
+  
+  // I'm trying to get the document
+  DocumentSnapshot collectionDoc = await postcodeDoc.get();
 
-  // I'm trying to get the documents where the 'postcode' field matches the given postcode
-  QuerySnapshot querySnapshot =
-      await collectionRef.where('postcode', isEqualTo: postcode).get();
-
-  // I'm checking if any documents were found
-  if (querySnapshot.docs.isEmpty) {
-    // If no documents were found, I'm printing a message and returning null
-    print('No collection dates found for this postcode.');
+  // I'm checking if the document exists
+  if (!collectionDoc.exists) {
+    // If the document does not exist or the 'postcode' field is null, I'm printing a message and returning null
+    print('No document found with the postcode $postcode');
     return null;
   } else {
     // If documents were found, I'm returning the 'recyclingDates' and 'wasteDates' fields of the first document
     Map<String, dynamic> data =
-        querySnapshot.docs.first.data() as Map<String, dynamic>;
+        collectionDoc.data() as Map<String, dynamic>;
     return {
       'recyclingDates': data['recyclingDates'],
       'wasteDates': data['wasteDates'],
     };
   }
+
+  // // I'm trying to get the documents where the 'postcode' field matches the given postcode
+  // QuerySnapshot querySnapshot =
+  //     await collectionRef.where('postcode', isEqualTo: postcode).get();
+
+  // // I'm checking if any documents were found
+  // if (querySnapshot.docs.isEmpty) {
+  //   // If no documents were found, I'm printing a message and returning null
+  //   print('No collection dates found for this postcode.');
+  //   print(querySnapshot);
+  //   return null;
+  // } 
 }
