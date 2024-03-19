@@ -61,21 +61,6 @@ class _CollDatesState extends State<CollDates> {
           ),
         ),
 
-        const Padding(
-          padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
-          child: Text(
-            "This will be a table of dates from db",
-            textAlign: TextAlign.start,
-            overflow: TextOverflow.clip,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontStyle: FontStyle.normal,
-              fontSize: 20,
-              color: Color(0xff000000),
-            ),
-          ),
-        ),
-
         
 
         const Padding(
