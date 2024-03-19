@@ -177,7 +177,6 @@ Future<List<String>> getDocumentTitles() async {
   return titles;
 }
 
-
 // Function for searching materials
 Future<Object?> getRecyclingMaterial(String materialName) async {
   // Try to get the document for the material
@@ -195,12 +194,11 @@ Future<Object?> getRecyclingMaterial(String materialName) async {
   // Return the document's data
   // return doc.data();
 
-  Map<String, dynamic> data =
-    doc.data() as Map<String, dynamic>;
-    return {
-      'canBeRecycled': data['canBeRecycled'],
-      'disposalInfo': data['disposalInfo'],
-    };
+  Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+  return {
+    'canBeRecycled': data['canBeRecycled'],
+    'disposalInfo': data['disposalInfo'],
+  };
 }
 
 // This function retrieves the device ID
@@ -346,7 +344,7 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
   // I'm getting a reference to the Firestore document for the correct postcode
   DocumentReference postcodeDoc =
       FirebaseFirestore.instance.collection('CollectionDates').doc(postcode);
-  
+
   // I'm trying to get the document
   DocumentSnapshot collectionDoc = await postcodeDoc.get();
 
@@ -357,8 +355,7 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
     return null;
   } else {
     // If documents were found, I'm returning the 'recyclingDates' and 'wasteDates' fields of the first document
-    Map<String, dynamic> data =
-        collectionDoc.data() as Map<String, dynamic>;
+    Map<String, dynamic> data = collectionDoc.data() as Map<String, dynamic>;
     return {
       'recyclingDates': data['recyclingDates'],
       'wasteDates': data['wasteDates'],
@@ -375,5 +372,5 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
   //   print('No collection dates found for this postcode.');
   //   print(querySnapshot);
   //   return null;
-  // } 
+  // }
 }
