@@ -1,3 +1,5 @@
+import 'package:ports_recycling/firebase.dart';
+
 import 'main.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -16,6 +18,9 @@ class _ItemSearchState extends State<ItemSearch> {
   late GoogleMapController mapController;
   TextEditingController searchController = TextEditingController();
   late PlacesAutocompleteResponse searchResults;
+
+  String materialName = "";
+  Map<String, dynamic> materialInfo = {};
 
   @override
   Widget build(BuildContext context) {
@@ -63,16 +68,44 @@ class _ItemSearchState extends State<ItemSearch> {
         ),
 
         Padding(
-          padding: EdgeInsets.fromLTRB(0, 0, 0, 50),
-          child:
-        AddressSearchBar(
-                      controller: searchController,
-                      onSelected: (placeId) {
-                        selectAddress(placeId!);
-                      },
-                    ),
-        ),
+                    padding: EdgeInsets.fromLTRB(0, 0, 0, 50),
+                    child: MaterialSearchBar(
+                      onSelected: (selectedMaterial) async {
 
+                        setState(() {
+                          materialName = selectedMaterial;
+                          //materialInfo = await getRecyclingMaterial(materialName) as Map<String, dynamic>;
+
+                          setState(() {
+                            // Update the state here
+                          });
+                        });
+                        
+                      }
+                    ), // Insert the MaterialSearchBar here
+                  ),
+
+                  if (materialName != "") 
+                    Text(
+                      materialName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                        color: Colors.black,
+                      ),
+                    ),
+                  
+
+                  if (materialInfo != {}) 
+                    Column(
+                      children: materialInfo.entries.map((entry) {
+                        return ListTile(
+                          title: Text(entry.key),
+                          subtitle: Text(entry.value.toString()),
+                        );
+                      }).toList(),
+                    ),
+                  
 
 Padding(
   padding: EdgeInsets.fromLTRB(0, 160, 0, 0),
@@ -113,6 +146,7 @@ MaterialButton(
     );
   }
 
+
   // ... existing code
 
   void selectAddress(String placeId) async {
@@ -145,18 +179,20 @@ MaterialButton(
   }
 }
 
-class AddressSearchBar extends StatefulWidget {
-  final TextEditingController controller;
-  final ValueChanged<String?> onSelected;
 
-  AddressSearchBar({required this.controller, required this.onSelected});
+
+class MaterialSearchBar extends StatefulWidget {
+  final Function(String) onSelected; // Callback for item selection
+
+  MaterialSearchBar({required this.onSelected}); // Constructor
 
   @override
-  _AddressSearchBarState createState() => _AddressSearchBarState();
+  _MaterialSearchBarState createState() => _MaterialSearchBarState();
 }
 
-class _AddressSearchBarState extends State<AddressSearchBar> {
-  PlacesAutocompleteResponse searchResults = PlacesAutocompleteResponse(status: '', predictions: []);
+class _MaterialSearchBarState extends State<MaterialSearchBar> {
+  final TextEditingController _searchController = TextEditingController();
+  List<String> _suggestions = [];
 
   @override
   Widget build(BuildContext context) {
@@ -164,16 +200,27 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextField(
-          controller: widget.controller,
+          controller: _searchController,
           decoration: InputDecoration(
             border: OutlineInputBorder(),
-            hintText: "Search for an item",
+            hintText: "Search for a material",
           ),
           onChanged: (value) {
-            //searchPlaces(value);
+            print('Search query: $value'); // Debug print
+            setState(() {
+              // Update the suggestions list here
+              // You can replace this with your Firestore query
+              getFilteredSuggestions(value).then((suggestions) {
+                setState(() {
+                  _suggestions = suggestions;
+                  print('Suggestions: $_suggestions'); // Debug print
+                });
+              });
+            });
           },
         ),
-        if (searchResults.predictions.isNotEmpty)
+        // Display suggestions list here (use ListView.builder)
+        if (_suggestions.isNotEmpty)
           Container(
             margin: EdgeInsets.symmetric(vertical: 5.0),
             padding: EdgeInsets.all(10.0),
@@ -190,22 +237,27 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
               ],
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: searchResults.predictions
-                  .map((Prediction prediction) => ListTile(
-                        title: Text(prediction.description ?? ''),
-                        onTap: () {
-                          widget.controller.text = prediction.description ?? '';
-                          widget.onSelected(prediction.placeId ?? '');
-                          setState(() {
-                            searchResults = PlacesAutocompleteResponse(status: '', predictions: []); // Reset to an empty response
-                          });
-                        },
-                      ))
-                  .toList(),
+              children: _suggestions.map((suggestion) {
+                return ListTile(
+                  title: Text(suggestion),
+                  onTap: () async {
+                    // Call the onSelected callback with the selected suggestion
+                    widget.onSelected(suggestion);
+                  },
+                );
+              }).toList(), // Add .toList() to convert the result to List<Widget>
             ),
           ),
       ],
     );
   }
+
+  Future<List<String>> getFilteredSuggestions(String query) async {
+    // Simulated list of suggestions
+    List<String> allMaterials = await getDocumentTitles();
+    // Filter suggestions based on query
+    return allMaterials.where((material) => material.toLowerCase().contains(query.toLowerCase())).toList();
+  }
 }
+
+
