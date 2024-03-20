@@ -248,23 +248,17 @@ Future<bool?> addDeviceIdToAddresses(String placeId, bool notifications) async {
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
 
-  // I'm checking if the document exists
-  DocumentSnapshot doc = await docRef.get();
-  if (!doc.exists) {
-    // If the document does not exist, I'm adding it
-    Map<String, dynamic> data = {
-      'formattedAddress': addressDetails['formattedAddress'],
-      'postcode': addressDetails['postcode'],
-      'location': addressDetails['location'],
-      'notifications': notifications,
-    };
-    // I'm setting the document data
-    await docRef.set(data);
-  } else {
-    // If the document already exists, I'm printing a message and returning null
-    print('A document with this device ID already exists.');
-    return null;
-  }
+  // I'm mapping the document data
+  Map<String, dynamic> data = {
+    'formattedAddress': addressDetails['formattedAddress'],
+    'postcode': addressDetails['postcode'],
+    'location': addressDetails['location'],
+    'placeId' : placeId,
+    'notifications': notifications,
+  };
+
+  // I'm setting the document data
+  await docRef.set(data);
 
   // If everything went well, I'm returning true
   return true;

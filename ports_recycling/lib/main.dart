@@ -12,6 +12,8 @@ import 'homeScreen.dart';
 import 'mapScreen.dart';
 
 bool splashScreen = true;
+String splashScreenName = "Welcome";
+Map<String, dynamic> localAddress = {};
 
 Future<void> main() async {
   // Ensuring that widget binding is initialized
@@ -32,6 +34,7 @@ Future<void> main() async {
   if (await getFormattedAddress(await getDeviceId()) != null) {
     splashScreen = false;
   }
+
 
   // Running the app
   runApp(MyApp());
