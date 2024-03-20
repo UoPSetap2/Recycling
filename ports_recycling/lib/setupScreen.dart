@@ -7,6 +7,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 
 final myController = TextEditingController();
+bool saveButtonDisabled = true;
+bool deleteButtonDisabled = true;
+bool homeAddress = false;
+bool notifications = false;
+
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({Key? key}) : super(key: key);
@@ -19,10 +24,42 @@ class _SetupScreenState extends State<SetupScreen> {
   late GoogleMapController mapController;
   TextEditingController searchController = TextEditingController();
   late PlacesAutocompleteResponse searchResults;
-  String? address = "";
-  late bool homeAddress;
-  late bool notifications;
+  String? address;
   String? formattedAddress = "";
+
+
+  @override
+  void initState() {
+    super.initState();
+    getAddress().then((value) {
+      setState(() {
+        address = value;
+        formattedAddress = value;
+        deleteButtonDisabled = false;
+        saveButtonDisabled = true;
+      });
+
+      if (value != "") {
+        getRadioButtons().then((radioButtons) {
+          setState(() {
+            homeAddress = radioButtons![0];
+            notifications = radioButtons[1];
+          });
+        });
+      }
+    });
+
+    if (splashScreen && splashScreenName == "Welcome") {
+      setState(() {
+        splashScreenName = "Welcome";
+      });
+    } else {
+      setState(() {
+        splashScreenName = "Settings";
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +79,8 @@ class _SetupScreenState extends State<SetupScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 55, 20, 30),
                     child: Text(
-                      "Welcome",
-                      textAlign: TextAlign.start,
+                      splashScreenName,
+                      textAlign: TextAlign.center,
                       overflow: TextOverflow.clip,
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
@@ -53,11 +90,11 @@ class _SetupScreenState extends State<SetupScreen> {
                       ),
                     ),
                   ),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
                     child: Text(
-                      "Enter your address",
-                      textAlign: TextAlign.start,
+                      (!splashScreen && address != "") ? "Your saved address information" : "Enter your address",
+                      textAlign: TextAlign.center,
                       overflow: TextOverflow.clip,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
@@ -81,6 +118,7 @@ class _SetupScreenState extends State<SetupScreen> {
                               getStringAddress(address!).then((value) {
                                 setState(() {
                                   formattedAddress = value;
+                                  saveButtonDisabled = false;
                                 });
                               });
                               // Instead of calling select address, display the selected address here
@@ -112,6 +150,7 @@ class _SetupScreenState extends State<SetupScreen> {
                             onTap: () {
                               setState(() {
                                 address = "";
+                                saveButtonDisabled = true;
                               });
                               print("Edit");
                             },
@@ -151,8 +190,12 @@ class _SetupScreenState extends State<SetupScreen> {
                           flex: 1,
                           fit: FlexFit.tight,
                           child: SwitchExample(
+                                  initialValue: homeAddress,
                                   onChanged: (value) {
-                                    homeAddress = value;
+                                    setState(() {
+                                      homeAddress = value;
+                                      //saveButtonDisabled = false;
+                                    });
                                   },
                           ),
                         ),
@@ -182,8 +225,12 @@ class _SetupScreenState extends State<SetupScreen> {
                           flex: 1,
                           fit: FlexFit.tight,
                           child: SwitchExample(
+                                  initialValue: notifications,
                                   onChanged: (value) {
-                                    notifications = value;
+                                    setState(() {
+                                      notifications = value;
+                                      //saveButtonDisabled = false;
+                                    });                                
                                   },
                           ),
                         ),
@@ -191,21 +238,31 @@ class _SetupScreenState extends State<SetupScreen> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(0, 80, 0, 0),
+                    padding: EdgeInsets.fromLTRB(0, 60, 0, 0),
                     child: MaterialButton(
                       onPressed: () {
-
-                        // Save address info to DB
-                        addDeviceIdToAddresses(address!, notifications);
-
+                        if (!saveButtonDisabled) {
+                          if (homeAddress) {
+                            // Save address info to DB
+                            addDeviceIdToAddresses(address!, notifications);
+                          } else if (!homeAddress) {
+                            setLocalAddress(address!, notifications);
+                          }
+                        
+                        if (splashScreen)
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) =>
                                   const BottomNavigationBarExample()),
                         );
+                        setState(() {
+                          splashScreen = false;
+                          saveButtonDisabled = true;
+                        });
+                        }
                       },
-                      color: Colors.green,
+                      color: saveButtonDisabled ? Colors.grey : (splashScreen ? Colors.green : Colors.blue),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
@@ -215,8 +272,8 @@ class _SetupScreenState extends State<SetupScreen> {
                       textColor: Colors.white,
                       height: 20,
                       minWidth: 150,
-                      child: const Text(
-                        "Save",
+                      child: Text(
+                        splashScreen ? "Save" : "Update",
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -225,10 +282,13 @@ class _SetupScreenState extends State<SetupScreen> {
                       ),
                     ),
                   ),
+                  if(splashScreen && splashScreenName == "Welcome")
                   Padding(
                     padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
                     child: GestureDetector(
                       onTap: () {
+                        splashScreen = true;
+                        splashScreenName = "Settings";
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -239,6 +299,42 @@ class _SetupScreenState extends State<SetupScreen> {
                       child: Text(
                         "Skip for now",
                         style: TextStyle(color: Colors.green),
+                      ),
+                    ),
+                  ),
+                  
+                  if(!splashScreen)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
+                    child: MaterialButton(
+                      onPressed: () async {
+                        if (!deleteButtonDisabled) {
+                        deleteAddressData(await getDeviceId());
+                        setState(() {
+                          deleteButtonDisabled = true; 
+                          splashScreen = true;
+                          address = "";
+                        });
+
+                        }
+                      },
+                      color: deleteButtonDisabled ? Colors.grey : Color.fromARGB(255, 196, 33, 22),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                        side: const BorderSide(color: Colors.white, width: 2.5),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      textColor: Colors.white,
+                      height: 20,
+                      minWidth: 150,
+                      child: const Text(
+                        "Delete Saved Address",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          fontStyle: FontStyle.normal,
+                        ),
                       ),
                     ),
                   ),
@@ -340,9 +436,10 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
 }
 
 class SwitchExample extends StatefulWidget {
+  final bool initialValue; // Add this field to hold the initial value
   final ValueChanged<bool>? onChanged;
 
-  const SwitchExample({Key? key, this.onChanged}) : super(key: key);
+  const SwitchExample({Key? key, required this.initialValue, this.onChanged}) : super(key: key);
 
   @override
   State<SwitchExample> createState() => _SwitchExampleState();
@@ -350,6 +447,12 @@ class SwitchExample extends StatefulWidget {
 
 class _SwitchExampleState extends State<SwitchExample> {
   bool light = false;
+
+  @override
+  void initState() {
+    super.initState();
+    light = widget.initialValue; // Initialize the switch state with the provided initial value
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -442,4 +545,24 @@ Future<String?> getStringAddress(String placeId) async {
   // I'm getting the formatted address of the place
   return response.result.formattedAddress?.replaceAll(', ', ',\n');
 
+}
+
+
+Future<String?> getAddress() async {
+  if (await getFormattedAddress(await getDeviceId()) != null) {
+    String? formattedAddress = await getFormattedAddress(await getDeviceId());
+    return formattedAddress?.replaceAll(', ', ',\n');
+  } else {
+    return "";
+  }
+}
+
+Future<List<bool>?> getRadioButtons() async {
+  return [true, (await getNotifications(await getDeviceId()))!];
+}
+
+Future<void> setLocalAddress(String placeId, bool notifications) async {
+  localAddress = (await selectAddress(placeId))!;
+  localAddress['placeId'] = placeId;
+  localAddress['notifications'] = notifications;
 }
