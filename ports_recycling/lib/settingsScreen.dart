@@ -9,18 +9,16 @@ import 'package:google_maps_webservice/places.dart';
 final myController = TextEditingController();
 bool saveButtonDisabled = true;
 bool deleteButtonDisabled = true;
-bool homeAddress = false;
-bool notifications = false;
 
 
-class SetupScreen extends StatefulWidget {
-  const SetupScreen({Key? key}) : super(key: key);
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({Key? key}) : super(key: key);
 
   @override
-  _SetupScreenState createState() => _SetupScreenState();
+  _SettingsScreenState createState() => _SettingsScreenState();
 }
 
-class _SetupScreenState extends State<SetupScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
   late GoogleMapController mapController;
   TextEditingController searchController = TextEditingController();
   late PlacesAutocompleteResponse searchResults;
@@ -31,33 +29,40 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   void initState() {
     super.initState();
-    getAddress().then((value) {
-      setState(() {
-        address = value;
-        formattedAddress = value;
-        deleteButtonDisabled = false;
-        saveButtonDisabled = true;
-      });
+    checkDeviceHasSavedInfo(deviceId).then((hasSavedInfo) {
+      if (hasSavedInfo) {
+        getPlaceId(deviceId).then((placeId) {
+          getStringAddress(placeId!).then((formattedAddressDB) {
+            setState(() {
+              address = placeId;
+              formattedAddress = formattedAddressDB;
+              deleteButtonDisabled = false;
+              saveButtonDisabled = true;
+            });
 
-      if (value != "") {
-        getRadioButtons().then((radioButtons) {
-          setState(() {
-            homeAddress = radioButtons![0];
-            notifications = radioButtons[1];
+            getRadioButtons().then((radioButtons) {
+              setState(() {
+                homeAddress = radioButtons![0];
+                notifications = radioButtons[1];
+              });
+            });
           });
+        });
+      } else if (localAddress.isNotEmpty) {
+        setState(() {
+          address = localAddress['placeId'];
+          formattedAddress = localAddress['formattedAddress'];
+          homeAddress = false;
+          notifications = localAddress['notifications'];
+          deleteButtonDisabled = false;
+          saveButtonDisabled = true;
+        });
+      } else {
+        setState(() {
+          address = "";
         });
       }
     });
-
-    if (splashScreen && splashScreenName == "Welcome") {
-      setState(() {
-        splashScreenName = "Welcome";
-      });
-    } else {
-      setState(() {
-        splashScreenName = "Settings";
-      });
-    }
   }
 
 
@@ -79,7 +84,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 55, 20, 30),
                     child: Text(
-                      splashScreenName,
+                      "Settings",
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.clip,
                       style: const TextStyle(
@@ -93,7 +98,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   Padding(
                     padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
                     child: Text(
-                      (!splashScreen && address != "") ? "Your saved address information" : "Enter your address",
+                      address == "" ? "Enter your address" : "Your saved address information",
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.clip,
                       style: TextStyle(
@@ -194,7 +199,7 @@ class _SetupScreenState extends State<SetupScreen> {
                                   onChanged: (value) {
                                     setState(() {
                                       homeAddress = value;
-                                      //saveButtonDisabled = false;
+                                      saveButtonDisabled = false;
                                     });
                                   },
                           ),
@@ -229,7 +234,7 @@ class _SetupScreenState extends State<SetupScreen> {
                                   onChanged: (value) {
                                     setState(() {
                                       notifications = value;
-                                      //saveButtonDisabled = false;
+                                      saveButtonDisabled = false;
                                     });                                
                                   },
                           ),
@@ -244,25 +249,19 @@ class _SetupScreenState extends State<SetupScreen> {
                         if (!saveButtonDisabled) {
                           if (homeAddress) {
                             // Save address info to DB
+                            print(placeIdDB);
                             addDeviceIdToAddresses(address!, notifications);
                           } else if (!homeAddress) {
                             setLocalAddress(address!, notifications);
                           }
                         
-                        if (splashScreen)
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const BottomNavigationBarExample()),
-                        );
                         setState(() {
-                          splashScreen = false;
                           saveButtonDisabled = true;
+                          deleteButtonDisabled = false;
                         });
                         }
                       },
-                      color: saveButtonDisabled ? Colors.grey : (splashScreen ? Colors.green : Colors.blue),
+                      color: saveButtonDisabled ? Colors.grey : Colors.blue,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
@@ -273,7 +272,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       height: 20,
                       minWidth: 150,
                       child: Text(
-                        splashScreen ? "Save" : "Update",
+                        "Update",
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -282,28 +281,8 @@ class _SetupScreenState extends State<SetupScreen> {
                       ),
                     ),
                   ),
-                  if(splashScreen && splashScreenName == "Welcome")
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: GestureDetector(
-                      onTap: () {
-                        splashScreen = true;
-                        splashScreenName = "Settings";
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const BottomNavigationBarExample()),
-                        );
-                      },
-                      child: Text(
-                        "Skip for now",
-                        style: TextStyle(color: Colors.green),
-                      ),
-                    ),
-                  ),
                   
-                  if(!splashScreen)
+                
                   Padding(
                     padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
                     child: MaterialButton(
@@ -312,8 +291,9 @@ class _SetupScreenState extends State<SetupScreen> {
                         deleteAddressData(await getDeviceId());
                         setState(() {
                           deleteButtonDisabled = true; 
-                          splashScreen = true;
                           address = "";
+                          homeAddress = false;
+                          notifications = false;
                         });
 
                         }
@@ -547,15 +527,15 @@ Future<String?> getStringAddress(String placeId) async {
 
 }
 
-
-Future<String?> getAddress() async {
-  if (await getFormattedAddress(await getDeviceId()) != null) {
-    String? formattedAddress = await getFormattedAddress(await getDeviceId());
-    return formattedAddress?.replaceAll(', ', ',\n');
-  } else {
-    return "";
-  }
-}
+// -- No Longer used after fixing the settings screen, commented out for future reference
+// Future<String?> getAddress() async {
+//   if (await getFormattedAddress(await getDeviceId()) != null) {
+//     String? formattedAddress = await getFormattedAddress(await getDeviceId());
+//     return formattedAddress?.replaceAll(', ', ',\n');
+//   } else {
+//     return "";
+//   }
+// }
 
 Future<List<bool>?> getRadioButtons() async {
   return [true, (await getNotifications(await getDeviceId()))!];

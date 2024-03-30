@@ -1,19 +1,22 @@
-// ignore_for_file: prefer_const_constructors
 // Importing necessary libraries
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ports_recycling/mapScreen.dart';
+import 'package:ports_recycling/splashScreen.dart';
 import 'firebase.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'setupScreen.dart';
+import 'settingsScreen.dart';
 import 'homeScreen.dart';
 import 'mapScreen.dart';
 
+late String deviceId;
+late String placeIdDB;
 bool splashScreen = true;
-String splashScreenName = "Welcome";
 Map<String, dynamic> localAddress = {};
+bool homeAddress = false;
+bool notifications = false;
 
 Future<void> main() async {
   // Ensuring that widget binding is initialized
@@ -31,10 +34,14 @@ Future<void> main() async {
     ),
   );
 
-  if (await getFormattedAddress(await getDeviceId()) != null) {
-    splashScreen = false;
-  }
+  deviceId = await getDeviceId();
 
+  if (await checkDeviceHasSavedInfo(deviceId)) {
+    splashScreen = false;
+    homeAddress = true;
+    notifications = (await getNotifications(deviceId))!;
+    placeIdDB = (await getPlaceId(deviceId))!;
+  }
 
   // Running the app
   runApp(MyApp());
@@ -49,7 +56,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       // App settings and navigation
-      home: splashScreen ? SetupScreen() : BottomNavigationBarExample(),
+      home: splashScreen ? SplashScreen() : BottomNavigationBarExample(),
     );
   }
 }
@@ -81,7 +88,7 @@ class _BottomNavigationBarExampleState
   static final List<Widget> _widgetOptions = <Widget>[
     const HomeScreen(),
     MapScreen(),
-    const SetupScreen(),
+    const SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {
