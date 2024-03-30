@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'firebase.dart';
 import 'main.dart';
@@ -12,8 +13,27 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController mapController;
   List<Marker> markers = [];
+  late GeoPoint home;
 
   final LatLng _center = const LatLng(50.79869842529297, -1.0990136861801147);
+
+  @override
+  void initState() {
+    super.initState();
+    checkDeviceHasSavedInfo(deviceId).then((hasSavedInfo) {
+      if (hasSavedInfo) {
+        getLocation(deviceId).then((location) {
+          setState(() {
+            home = location!;
+          });
+        });
+      } else if (localAddress.isNotEmpty) {
+        setState(() {
+          home = localAddress['location'];
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +73,16 @@ class _MapScreenState extends State<MapScreen> {
         _addMarker(marker.position, marker.infoWindow.title ?? '',
             marker.infoWindow.snippet ?? '', marker.icon);
       }
+      _addMarker(LatLng(50.8390731, -1.095193869), "Recycling Center",
+            "Recycling Center Info", BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen));
+
+      try {
+        _addMarker(LatLng(home.latitude, home.longitude), "Home",
+          "Your Saved Address", BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan));
+      } catch (e) {
+        print("Home not set");
+      }
+
       print('Successfully added markers from Firestore.');
 
       // Call setState to update the map with the new markers

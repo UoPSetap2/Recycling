@@ -5,7 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:csv/csv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:device_info/device_info.dart';
-import 'setupScreen.dart';
+import 'settingsScreen.dart';
 import 'dart:async';
 
 // Initializing Firebase
@@ -113,7 +113,7 @@ Future<List<Marker>> getMarkersFromFirestore() async {
         title: "Recycling Point",
         snippet: description,
       ),
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
     );
 
     // Add the marker to the list
@@ -229,6 +229,7 @@ Future<String> getDeviceId() async {
 // This function adds the device ID to the 'Addresses' collection in Firestore
 Future<bool?> addDeviceIdToAddresses(String placeId, bool notifications) async {
   // I'm getting the address details by calling the 'selectAddress' function
+  print(placeId);
   Map<String, dynamic>? addressDetails = await selectAddress(placeId);
 
   // I'm checking if the address details are valid
@@ -300,6 +301,15 @@ Future<bool?> getNotifications(String deviceId) async {
   return data?['notifications'];
 }
 
+// This function retrieves the placeId value for a given device ID
+Future<String?> getPlaceId(String deviceId) async {
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+  DocumentSnapshot doc = await docRef.get();
+  Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+  return data?['placeId'];
+}
+
 // This function deletes the address data for a given device ID
 Future<bool> deleteAddressData(String deviceId) async {
   DocumentReference docRef =
@@ -368,3 +378,23 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
   //   return null;
   // }
 }
+
+Future<bool> checkDeviceHasSavedInfo(
+    String deviceId) async {
+  // I'm getting a reference to the Firestore document with the device ID
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+
+  // I'm trying to get the document
+  DocumentSnapshot doc = await docRef.get();
+
+  // I'm checking if the document exists
+  if (doc.exists) {
+    // If the document does exist, I'm returning true
+    return true;
+  } else {
+    // If the document does not exist, I'm returning false
+    return false;
+  }
+}
+    
