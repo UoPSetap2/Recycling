@@ -30,17 +30,23 @@ class _CollDatesState extends State<CollDates> {
   @override
   void initState() {
     super.initState();
+    DateTime currentDate = DateTime.now();
+    currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
     getDates().then((dates) {
     setState(() {
       recyclingDates = dates?['recyclingDates'];
       recyclingDates = recyclingDates
-        .where((date) => DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(DateTime.now()))
+        .where((date) =>
+          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(currentDate) ||
+          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAtSameMomentAs(currentDate))
         .toList();
       recyclingDates.sort((a, b) => DateTime.parse(a.replaceAll('/', '-').split('-').reversed.join('-')).compareTo(DateTime.parse(b.replaceAll('/', '-').split('-').reversed.join('-'))));
 
       wasteDates = dates?['wasteDates'];
       wasteDates = wasteDates
-        .where((date) => DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(DateTime.now()))
+        .where((date) =>
+          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(currentDate) ||
+          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAtSameMomentAs(currentDate))
         .toList();
       wasteDates.sort((a, b) => DateTime.parse(a.replaceAll('/', '-').split('-').reversed.join('-')).compareTo(DateTime.parse(b.replaceAll('/', '-').split('-').reversed.join('-'))));
     

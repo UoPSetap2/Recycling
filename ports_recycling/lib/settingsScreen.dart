@@ -249,7 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         if (!saveButtonDisabled) {
                           if (homeAddress) {
                             // Save address info to DB
-                            print(placeIdDB);
+                            //print(placeIdDB);
                             addDeviceIdToAddresses(address!, notifications);
                           } else if (!homeAddress) {
                             setLocalAddress(address!, notifications);
@@ -294,6 +294,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           address = "";
                           homeAddress = false;
                           notifications = false;
+                          localAddress = {};
                         });
 
                         }
