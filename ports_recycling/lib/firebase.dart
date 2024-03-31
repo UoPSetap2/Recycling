@@ -365,18 +365,32 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
       'wasteDates': data['wasteDates'],
     };
   }
+}
 
-  // // I'm trying to get the documents where the 'postcode' field matches the given postcode
-  // QuerySnapshot querySnapshot =
-  //     await collectionRef.where('postcode', isEqualTo: postcode).get();
+// Gets collection dates for a given device ID
+Future<Map<String, dynamic>?> getCollectionDatesLocally(
+    String postcode) async {
 
-  // // I'm checking if any documents were found
-  // if (querySnapshot.docs.isEmpty) {
-  //   // If no documents were found, I'm printing a message and returning null
-  //   print('No collection dates found for this postcode.');
-  //   print(querySnapshot);
-  //   return null;
-  // }
+  // I'm getting a reference to the Firestore document for the correct postcode
+  DocumentReference postcodeDoc =
+      FirebaseFirestore.instance.collection('CollectionDates').doc(postcode);
+
+  // I'm trying to get the document
+  DocumentSnapshot collectionDoc = await postcodeDoc.get();
+
+  // I'm checking if the document exists
+  if (!collectionDoc.exists) {
+    // If the document does not exist or the 'postcode' field is null, I'm printing a message and returning null
+    print('No document found with the postcode $postcode');
+    return null;
+  } else {
+    // If documents were found, I'm returning the 'recyclingDates' and 'wasteDates' fields of the first document
+    Map<String, dynamic> data = collectionDoc.data() as Map<String, dynamic>;
+    return {
+      'recyclingDates': data['recyclingDates'],
+      'wasteDates': data['wasteDates'],
+    };
+  }
 }
 
 Future<bool> checkDeviceHasSavedInfo(
