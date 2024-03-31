@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:ports_recycling/binInfo.dart';
 import 'package:ports_recycling/colDatesScreen.dart';
+import 'package:ports_recycling/firebase.dart';
 import 'package:ports_recycling/itemSearch.dart';
 import 'package:ports_recycling/rciScreen.dart';
 import 'package:ports_recycling/whatCanIRecycle.dart';
 import 'main.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -15,6 +19,63 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    checkDeviceHasSavedInfo(deviceId).then((hasSavedInfo) {
+      if (hasSavedInfo) {
+        getNotifications(deviceId).then((notifications) {
+        if (notifications != null && notifications) {
+          DateTime currentDate = DateTime.now();
+          currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
+          getDates().then((dates) {
+            setState(() {
+              recyclingDates = dates?['recyclingDates'];
+              recyclingDates = recyclingDates
+                .where((date) =>
+                  DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(currentDate) ||
+                  DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAtSameMomentAs(currentDate))
+                .toList();
+              recyclingDates.sort((a, b) => DateTime.parse(a.replaceAll('/', '-').split('-').reversed.join('-'))
+                  .compareTo(DateTime.parse(b.replaceAll('/', '-').split('-').reversed.join('-'))));
+
+              wasteDates = dates?['wasteDates'];
+              wasteDates = wasteDates
+                  .where((date) =>
+                    DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(currentDate) ||
+                    DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAtSameMomentAs(currentDate))
+                  .toList();
+              wasteDates.sort((a, b) => DateTime.parse(a.replaceAll('/', '-').split('-').reversed.join('-'))
+                  .compareTo(DateTime.parse(b.replaceAll('/', '-').split('-').reversed.join('-'))));
+
+              for (int i = 0; i < 5; i++) {
+                recyclingDates.add("---");
+                wasteDates.add("---");
+              }
+            });
+          });
+
+        DateTime today = DateTime.now();
+        today = DateTime(today.year, today.month, today.day);
+        DateTime tomorrow = DateTime.now().add(const Duration(days: 1));
+        tomorrow = DateTime(tomorrow.year, tomorrow.month, tomorrow.day);
+
+  if (wasteDates[0] != "Loading..." && recyclingDates[0] != "Loading...") {
+    DateTime wasteDate = DateTime.parse(wasteDates[0].replaceAll('/', '-').split('-').reversed.join('-'));
+    DateTime recyclingDate = DateTime.parse(recyclingDates[0].replaceAll('/', '-').split('-').reversed.join('-'));
+    if (wasteDate == today || recyclingDate == today || wasteDate == tomorrow || recyclingDate == tomorrow) {
+      showNotification();
+    }
+
+  }
+
+        }
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -62,11 +123,31 @@ return WillPopScope(
               padding: EdgeInsets.fromLTRB(10,25,10,10),
               child: 
                 MaterialButton(
-                  onPressed: () {                
-                     Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CollDates()),
-                  );
+                  onPressed: () async {
+                    if (await checkDeviceHasSavedInfo(deviceId) || localAddress.isNotEmpty) {                
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => CollDates()),
+                      );
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text("Error"),
+                            content: Text("No address selected. Please go to settings and enter an address to find your collection dates"),
+                            actions: [
+                              TextButton(
+                                child: Text("OK"),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
                   },
                   color: Colors.green,
                   elevation: 0,
@@ -207,7 +288,7 @@ return WillPopScope(
               padding: EdgeInsets.fromLTRB(10,40,10,10),
               child: 
             MaterialButton(
-                  onPressed: () {                
+                  onPressed: () {               
                      Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const RCIScreen()),
@@ -309,4 +390,28 @@ return WillPopScope(
   )
 ));
   }
+}
+
+final AndroidInitializationSettings androidInitializationSettings = const AndroidInitializationSettings('@mipmap/ic_launcher');
+
+Future<void> showNotification() async {
+  final AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
+        'your channel id',
+        'your channel name', // Corrected the parameter name
+        //'your channel description',
+        icon: '@mipmap/ic_launcher', // Corrected the parameter name
+        importance: Importance.max,
+        priority: Priority.high,
+        showWhen: false,
+    );
+  NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    'Upcoming Collection',
+    'You have a collection soon, make sure to put the bins out!',
+    platformChannelSpecifics,
+    payload: 'item x',
+  );
 }
