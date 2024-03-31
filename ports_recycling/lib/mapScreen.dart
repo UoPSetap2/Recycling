@@ -74,11 +74,11 @@ class _MapScreenState extends State<MapScreen> {
             marker.infoWindow.snippet ?? '', marker.icon);
       }
       _addMarker(LatLng(50.8390731, -1.095193869), "Recycling Center",
-            "Recycling Center Info", BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen));
+            "Paulsgrove Portway, Port Solent, PO6 4UD", BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen));
 
       try {
         _addMarker(LatLng(home.latitude, home.longitude), "Home",
-          "Your Saved Address", BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan));
+          "Your Selected Address", BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan));
       } catch (e) {
         print("Home not set");
       }
