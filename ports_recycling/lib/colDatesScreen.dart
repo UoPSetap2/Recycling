@@ -34,6 +34,7 @@ class _CollDatesState extends State<CollDates> {
     currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
     getDates().then((dates) {
     setState(() {
+      if (dates != null) {
       recyclingDates = dates?['recyclingDates'];
       recyclingDates = recyclingDates
         .where((date) =>
@@ -54,7 +55,7 @@ class _CollDatesState extends State<CollDates> {
       recyclingDates.add("---");
       wasteDates.add("---");
     }
-    
+      }
     });
   });
   }

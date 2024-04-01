@@ -31,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
           currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
           getDates().then((dates) {
             setState(() {
+              if (dates != null) {
               recyclingDates = dates?['recyclingDates'];
               recyclingDates = recyclingDates
                 .where((date) =>
@@ -52,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
               for (int i = 0; i < 5; i++) {
                 recyclingDates.add("---");
                 wasteDates.add("---");
+              }
               }
             });
           });
