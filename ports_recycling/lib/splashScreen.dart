@@ -23,6 +23,8 @@ class _SplashScreenState extends State<SplashScreen> {
   late PlacesAutocompleteResponse searchResults;
   String? address = "";
   String? formattedAddress = "";
+  bool homeAddressFrozen = false;
+  bool notificationsFrozen = true;
 
   @override
   Widget build(BuildContext context) {
@@ -131,80 +133,42 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
 
                   Padding(
-                    padding: EdgeInsets.fromLTRB(0, 0, 0, 20),
-                    child: Row(
-                      children: [
-                        const Flexible(
-                          flex: 3,
-                          fit: FlexFit.tight,
-                          child: Text(
-                            "Set as your home address",
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.clip,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontStyle: FontStyle.normal,
-                              fontSize: 18,
-                              color: Color(0xff000000),
-                            ),
-                          ),
-                        ),
-                        Flexible(
-                          flex: 1,
-                          fit: FlexFit.tight,
-                          child: SwitchExample(
-                                  initialValue: homeAddress,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      homeAddress = value;
-                                      //saveButtonDisabled = false;
-                                    });
-                                  },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: Row(
-                      children: [
-                        const Flexible(
-                          fit: FlexFit.tight,
-                          flex: 3,
-                          child: Text(
-                            "Recieve collection notifications for this address",
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.clip,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontStyle: FontStyle.normal,
-                              fontSize: 18,
-                              color: Color(0xff000000),
-                            ),
-                          ),
-                        ),
-                        Flexible(
-                          flex: 1,
-                          fit: FlexFit.tight,
-                          child: SwitchExample(
-                                  initialValue: notifications,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      notifications = value;
-                                      //saveButtonDisabled = false;
-                                    });                                
-                                  },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+  padding: EdgeInsets.fromLTRB(0, 0, 0, 20),
+  child: SwitchExample(
+    initialValue: homeAddress,
+    isFrozen: false,
+    text: "Save as your home address", // Possibly add "(This address will be saved to our database)" under this text in small font?
+    onChanged: (value) {
+      setState(() {
+        homeAddress = value;
+        notificationsFrozen = !notificationsFrozen;
+      });
+    },
+  ),
+),
+Padding(
+  padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
+  child: SwitchExample(
+    initialValue: notifications,
+    isFrozen: notificationsFrozen,
+    text: "Receive collection reminder notifications for this address",
+    onChanged: (value) {
+      setState(() {
+        notifications = value;
+      });
+    },
+  ),
+),
+
                   Padding(
                     padding: EdgeInsets.fromLTRB(0, 60, 0, 0),
                     child: MaterialButton(
                       onPressed: () {
                         if (!saveButtonDisabled) {
+                          if(notificationsFrozen) {
+                              notifications = false;
+                            }
+
                           if (homeAddress) {
                             // Save address info to DB
                             addDeviceIdToAddresses(address!, notifications);
@@ -359,8 +323,16 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
 class SwitchExample extends StatefulWidget {
   final bool initialValue; // Add this field to hold the initial value
   final ValueChanged<bool>? onChanged;
+  final bool isFrozen; // Add this field to hold the freeze state
+  final String text; // Add this field to hold the text
 
-  const SwitchExample({Key? key, required this.initialValue, this.onChanged}) : super(key: key);
+  const SwitchExample({
+    Key? key,
+    required this.initialValue,
+    required this.isFrozen,
+    required this.text,
+    this.onChanged,
+  }) : super(key: key);
 
   @override
   State<SwitchExample> createState() => _SwitchExampleState();
@@ -376,23 +348,49 @@ class _SwitchExampleState extends State<SwitchExample> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Switch(
-      // This bool value toggles the switch.
-      value: light,
-      activeColor: Colors.green,
-      onChanged: (bool value) {
-        // This is called when the user toggles the switch.
-        setState(() {
-          light = value;
-        });
-        if (widget.onChanged != null) {
-          widget.onChanged!(value);
-        }
-      },
-    );
-  }
+Widget build(BuildContext context) {
+  return Row(
+    children: [
+      Flexible(
+        flex: 3,
+        fit: FlexFit.tight,
+        child: Text(
+          widget.text,
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.clip,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontStyle: FontStyle.normal,
+            fontSize: 18,
+            color: widget.isFrozen ? Colors.grey : Color(0xff000000),
+          ),
+        ),
+      ),
+      Flexible(
+        flex: 1,
+        fit: FlexFit.tight,
+        child: Switch(
+          value: widget.isFrozen ? false : light,
+          activeColor: Colors.green,
+          onChanged: widget.isFrozen
+              ? null // Disable switch if frozen
+              : (bool value) {
+                  setState(() {
+                    light = value;
+                  });
+                  if (widget.onChanged != null) {
+                    widget.onChanged!(value);
+                  }
+                },
+          inactiveThumbColor: widget.isFrozen ? Color.fromARGB(255, 224, 224, 224) : null, // Set thumb color to gray when frozen
+          inactiveTrackColor: widget.isFrozen ? Colors.grey : null, // Set track color to gray when frozen
+        ),
+      ),
+    ],
+  );
 }
+}
+
 
 // Function put here so I can Import it due to visibility issues
 // I'm defining a function that takes a place ID as input and returns a map containing the
