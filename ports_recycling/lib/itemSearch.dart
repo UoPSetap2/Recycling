@@ -68,16 +68,17 @@ class _ItemSearchState extends State<ItemSearch> {
         ),
 
         Padding(
-                    padding: EdgeInsets.fromLTRB(0, 0, 0, 50),
+                    padding: EdgeInsets.fromLTRB(20, 20, 20, 40),
                     child: MaterialSearchBar(
                       onSelected: (selectedMaterial) async {
 
                         setState(() {
                           materialName = selectedMaterial;
-                          //materialInfo = await getRecyclingMaterial(materialName) as Map<String, dynamic>;
+                        });
 
+                        getRecyclingMaterial(materialName).then((result) {
                           setState(() {
-                            // Update the state here
+                            materialInfo = result as Map<String, dynamic>;
                           });
                         });
                         
@@ -86,7 +87,9 @@ class _ItemSearchState extends State<ItemSearch> {
                   ),
 
                   if (materialName != "") 
-                    Text(
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
+                    child: Text(
                       materialName,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -94,21 +97,27 @@ class _ItemSearchState extends State<ItemSearch> {
                         color: Colors.black,
                       ),
                     ),
+                    ),
+                    
                   
 
                   if (materialInfo != {}) 
-                    Column(
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
+                    child: Column(
                       children: materialInfo.entries.map((entry) {
                         return ListTile(
-                          title: Text(entry.key),
-                          subtitle: Text(entry.value.toString()),
+                          title: Text(getText(entry.key)),
+                          subtitle: Text(getText(entry.value.toString())),
                         );
                       }).toList(),
                     ),
+                  ),
+                    
                   
 
 Padding(
-  padding: EdgeInsets.fromLTRB(0, 160, 0, 0),
+  padding: EdgeInsets.fromLTRB(0, 120, 0, 0),
 child:
 MaterialButton(
                   onPressed: () {                
@@ -203,7 +212,7 @@ class _MaterialSearchBarState extends State<MaterialSearchBar> {
           controller: _searchController,
           decoration: InputDecoration(
             border: OutlineInputBorder(),
-            hintText: "Search for a material",
+            hintText: "Search for a material, e.g. cardboard",
           ),
           onChanged: (value) {
             print('Search query: $value'); // Debug print
@@ -241,6 +250,9 @@ class _MaterialSearchBarState extends State<MaterialSearchBar> {
                 return ListTile(
                   title: Text(suggestion),
                   onTap: () async {
+                    FocusScope.of(context).unfocus();
+                    _suggestions = [];
+                    _searchController.clear();
                     // Call the onSelected callback with the selected suggestion
                     widget.onSelected(suggestion);
                   },
@@ -257,6 +269,20 @@ class _MaterialSearchBarState extends State<MaterialSearchBar> {
     List<String> allMaterials = await getDocumentTitles();
     // Filter suggestions based on query
     return allMaterials.where((material) => material.toLowerCase().contains(query.toLowerCase())).toList();
+  }
+}
+
+String getText(input) {
+  if (input == "canBeRecycled") {
+    return "Can this be recycled?";
+  } else if (input == "true") {
+    return "Yes";
+  } else if (input == "false") {
+    return "No";
+  } else if (input == "disposalInfo"){
+    return "Disposal information:";
+  } else {
+    return input;
   }
 }
 

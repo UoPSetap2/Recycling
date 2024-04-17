@@ -7,22 +7,73 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 
 final myController = TextEditingController();
+bool saveButtonDisabled = true;
+bool deleteButtonDisabled = true;
+bool deleteButtonPressed = false;
 
-class SetupScreen extends StatefulWidget {
-  const SetupScreen({Key? key}) : super(key: key);
+
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({Key? key}) : super(key: key);
 
   @override
-  _SetupScreenState createState() => _SetupScreenState();
+  _SettingsScreenState createState() => _SettingsScreenState();
 }
 
-class _SetupScreenState extends State<SetupScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
   late GoogleMapController mapController;
   TextEditingController searchController = TextEditingController();
   late PlacesAutocompleteResponse searchResults;
-  String? address = "";
-  late bool homeAddress;
-  late bool notifications;
+  String? address;
   String? formattedAddress = "";
+  bool homeAddressFrozen = true;
+  bool notificationsFrozen = true;
+
+
+  @override
+  void initState() {
+    super.initState();
+    checkDeviceHasSavedInfo(deviceId).then((hasSavedInfo) {
+      if (hasSavedInfo) {
+        getPlaceId(deviceId).then((placeId) {
+          getStringAddress(placeId!).then((formattedAddressDB) {
+            setState(() {
+              address = placeId;
+              formattedAddress = formattedAddressDB;
+              deleteButtonDisabled = false;
+              saveButtonDisabled = true;
+            });
+
+            getRadioButtons().then((radioButtons) {
+              setState(() {
+                homeAddress = radioButtons![0];
+                notifications = radioButtons[1];
+              });
+            });
+          });
+        });
+        homeAddressFrozen = false;
+        notificationsFrozen = false;
+      } else if (localAddress.isNotEmpty) {
+        setState(() {
+          address = localAddress['placeId'];
+          formattedAddress = localAddress['formattedAddress'];
+          homeAddress = false;
+          notifications = localAddress['notifications'];
+          deleteButtonDisabled = false;
+          saveButtonDisabled = true;
+          homeAddressFrozen = false;
+          notificationsFrozen = true;
+        });
+      } else {
+        setState(() {
+          address = "";
+          homeAddressFrozen = false;
+          notificationsFrozen = true;
+        });
+      }
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +93,8 @@ class _SetupScreenState extends State<SetupScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 55, 20, 30),
                     child: Text(
-                      "Welcome",
-                      textAlign: TextAlign.start,
+                      "Settings",
+                      textAlign: TextAlign.center,
                       overflow: TextOverflow.clip,
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
@@ -53,11 +104,11 @@ class _SetupScreenState extends State<SetupScreen> {
                       ),
                     ),
                   ),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
                     child: Text(
-                      "Enter your address",
-                      textAlign: TextAlign.start,
+                      address == "" ? "Enter your address" : "Your saved address information",
+                      textAlign: TextAlign.center,
                       overflow: TextOverflow.clip,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
@@ -81,6 +132,7 @@ class _SetupScreenState extends State<SetupScreen> {
                               getStringAddress(address!).then((value) {
                                 setState(() {
                                   formattedAddress = value;
+                                  saveButtonDisabled = false;
                                 });
                               });
                               // Instead of calling select address, display the selected address here
@@ -112,6 +164,7 @@ class _SetupScreenState extends State<SetupScreen> {
                             onTap: () {
                               setState(() {
                                 address = "";
+                                saveButtonDisabled = true;
                               });
                               print("Edit");
                             },
@@ -129,83 +182,105 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
 
                   Padding(
-                    padding: EdgeInsets.fromLTRB(0, 0, 0, 20),
-                    child: Row(
-                      children: [
-                        const Flexible(
-                          flex: 3,
-                          fit: FlexFit.tight,
-                          child: Text(
-                            "Set as your home address",
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.clip,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontStyle: FontStyle.normal,
-                              fontSize: 18,
-                              color: Color(0xff000000),
-                            ),
-                          ),
-                        ),
-                        Flexible(
-                          flex: 1,
-                          fit: FlexFit.tight,
-                          child: SwitchExample(
-                                  onChanged: (value) {
-                                    homeAddress = value;
-                                  },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+  padding: EdgeInsets.fromLTRB(0, 0, 0, 20),
+  child: SwitchExample(
+    initialValue: homeAddress,
+    isFrozen: false,
+    text: "Save as your home address", // Possibly add "(This address will be saved to our database)" under this text in small font?
+    onChanged: (value) {
+      setState(() {
+        deleteButtonPressed = false;
+        homeAddress = value;
+        notificationsFrozen = !notificationsFrozen;
+        if (address != "") {
+          saveButtonDisabled = false;
+        }
+      });
+    },
+  ),
+),
+Padding(
+  padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
+  child: SwitchExample(
+    initialValue: notifications,
+    isFrozen: notificationsFrozen,
+    text: "Receive collection reminder notifications for this address",
+    onChanged: (value) {
+      setState(() {
+        deleteButtonPressed = false;
+        notifications = value;
+        if (address != "") {
+          saveButtonDisabled = false;
+        }
+      });
+    },
+  ),
+),
+
                   Padding(
-                    padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: Row(
-                      children: [
-                        const Flexible(
-                          fit: FlexFit.tight,
-                          flex: 3,
-                          child: Text(
-                            "Recieve collection notifications for this address",
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.clip,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontStyle: FontStyle.normal,
-                              fontSize: 18,
-                              color: Color(0xff000000),
-                            ),
-                          ),
-                        ),
-                        Flexible(
-                          flex: 1,
-                          fit: FlexFit.tight,
-                          child: SwitchExample(
-                                  onChanged: (value) {
-                                    notifications = value;
-                                  },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(0, 80, 0, 0),
+                    padding: EdgeInsets.fromLTRB(0, 60, 0, 0),
                     child: MaterialButton(
                       onPressed: () {
+                        if (!saveButtonDisabled) {
+                          if(notificationsFrozen) {
+                              notifications = false;
+                            }
 
-                        // Save address info to DB
-                        addDeviceIdToAddresses(address!, notifications);
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const BottomNavigationBarExample()),
-                        );
+                          if (homeAddress) {
+                            // Save address info to DB
+                            //print(placeIdDB);
+                            addDeviceIdToAddresses(address!, notifications);
+                          } else if (!homeAddress) {
+                            setLocalAddress(address!, notifications);
+                          }
+                        
+                        setState(() {
+                          saveButtonDisabled = true;
+                          deleteButtonDisabled = false;
+                        });
+                        }
                       },
-                      color: Colors.green,
+                      color: saveButtonDisabled ? Colors.grey : Colors.blue,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                        side: const BorderSide(color: Colors.white, width: 2.5),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      textColor: Colors.white,
+                      height: 20,
+                      minWidth: 150,
+                      child: Text(
+                        "Update",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          fontStyle: FontStyle.normal,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
+                    child: MaterialButton(
+                      onPressed: () async {
+                        if (!deleteButtonDisabled) {
+                        deleteAddressData(await getDeviceId());
+                        setState(() {
+                          deleteButtonDisabled = true; 
+                          address = "";
+                          homeAddress = false;
+                          notifications = false;
+                          localAddress = {};
+                          deleteButtonPressed = true;
+                          notificationsFrozen = true;
+                        });
+                       
+                        }
+                      },
+                      color: deleteButtonDisabled ? Colors.grey : Color.fromARGB(255, 196, 33, 22),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
@@ -216,29 +291,12 @@ class _SetupScreenState extends State<SetupScreen> {
                       height: 20,
                       minWidth: 150,
                       child: const Text(
-                        "Save",
+                        "Delete Saved Address",
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           fontStyle: FontStyle.normal,
                         ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const BottomNavigationBarExample()),
-                        );
-                      },
-                      child: Text(
-                        "Skip for now",
-                        style: TextStyle(color: Colors.green),
                       ),
                     ),
                   ),
@@ -340,9 +398,18 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
 }
 
 class SwitchExample extends StatefulWidget {
+  final bool initialValue; // Add this field to hold the initial value
   final ValueChanged<bool>? onChanged;
+  final bool isFrozen; // Add this field to hold the freeze state
+  final String text; // Add this field to hold the text
 
-  const SwitchExample({Key? key, this.onChanged}) : super(key: key);
+  const SwitchExample({
+    Key? key,
+    required this.initialValue,
+    required this.isFrozen,
+    required this.text,
+    this.onChanged,
+  }) : super(key: key);
 
   @override
   State<SwitchExample> createState() => _SwitchExampleState();
@@ -352,22 +419,53 @@ class _SwitchExampleState extends State<SwitchExample> {
   bool light = false;
 
   @override
-  Widget build(BuildContext context) {
-    return Switch(
-      // This bool value toggles the switch.
-      value: light,
-      activeColor: Colors.green,
-      onChanged: (bool value) {
-        // This is called when the user toggles the switch.
-        setState(() {
-          light = value;
-        });
-        if (widget.onChanged != null) {
-          widget.onChanged!(value);
-        }
-      },
-    );
+  void initState() {
+    super.initState();
+    light = widget.initialValue; // Initialize the switch state with the provided initial value
   }
+
+  @override
+Widget build(BuildContext context) {
+  return Row(
+    children: [
+      Flexible(
+        flex: 3,
+        fit: FlexFit.tight,
+        child: Text(
+          widget.text,
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.clip,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontStyle: FontStyle.normal,
+            fontSize: 18,
+            color: widget.isFrozen ? Colors.grey : Color(0xff000000),
+          ),
+        ),
+      ),
+      Flexible(
+        flex: 1,
+        fit: FlexFit.tight,
+        child: Switch(
+          value: widget.isFrozen ? false : deleteButtonPressed ? false : light,
+          activeColor: Colors.green,
+          onChanged: widget.isFrozen
+              ? null // Disable switch if frozen
+              : (bool value) {
+                  setState(() {
+                    light = value;
+                  });
+                  if (widget.onChanged != null) {
+                    widget.onChanged!(value);
+                  }
+                },
+          inactiveThumbColor: widget.isFrozen ? Color.fromARGB(255, 224, 224, 224) : null, // Set thumb color to gray when frozen
+          inactiveTrackColor: widget.isFrozen ? Colors.grey : null, // Set track color to gray when frozen
+        ),
+      ),
+    ],
+  );
+}
 }
 
 // Function put here so I can Import it due to visibility issues
@@ -442,4 +540,24 @@ Future<String?> getStringAddress(String placeId) async {
   // I'm getting the formatted address of the place
   return response.result.formattedAddress?.replaceAll(', ', ',\n');
 
+}
+
+// -- No Longer used after fixing the settings screen, commented out for future reference
+// Future<String?> getAddress() async {
+//   if (await getFormattedAddress(await getDeviceId()) != null) {
+//     String? formattedAddress = await getFormattedAddress(await getDeviceId());
+//     return formattedAddress?.replaceAll(', ', ',\n');
+//   } else {
+//     return "";
+//   }
+// }
+
+Future<List<bool>?> getRadioButtons() async {
+  return [true, (await getNotifications(await getDeviceId()))!];
+}
+
+Future<void> setLocalAddress(String placeId, bool notifications) async {
+  localAddress = (await selectAddress(placeId))!;
+  localAddress['placeId'] = placeId;
+  localAddress['notifications'] = notifications;
 }

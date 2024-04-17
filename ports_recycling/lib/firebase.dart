@@ -5,7 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:csv/csv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:device_info/device_info.dart';
-import 'setupScreen.dart';
+import 'settingsScreen.dart';
 import 'dart:async';
 
 // Initializing Firebase
@@ -113,7 +113,7 @@ Future<List<Marker>> getMarkersFromFirestore() async {
         title: "Recycling Point",
         snippet: description,
       ),
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
     );
 
     // Add the marker to the list
@@ -229,6 +229,7 @@ Future<String> getDeviceId() async {
 // This function adds the device ID to the 'Addresses' collection in Firestore
 Future<bool?> addDeviceIdToAddresses(String placeId, bool notifications) async {
   // I'm getting the address details by calling the 'selectAddress' function
+  print(placeId);
   Map<String, dynamic>? addressDetails = await selectAddress(placeId);
 
   // I'm checking if the address details are valid
@@ -248,23 +249,17 @@ Future<bool?> addDeviceIdToAddresses(String placeId, bool notifications) async {
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
 
-  // I'm checking if the document exists
-  DocumentSnapshot doc = await docRef.get();
-  if (!doc.exists) {
-    // If the document does not exist, I'm adding it
-    Map<String, dynamic> data = {
-      'formattedAddress': addressDetails['formattedAddress'],
-      'postcode': addressDetails['postcode'],
-      'location': addressDetails['location'],
-      'notifications': notifications,
-    };
-    // I'm setting the document data
-    await docRef.set(data);
-  } else {
-    // If the document already exists, I'm printing a message and returning null
-    print('A document with this device ID already exists.');
-    return null;
-  }
+  // I'm mapping the document data
+  Map<String, dynamic> data = {
+    'formattedAddress': addressDetails['formattedAddress'],
+    'postcode': addressDetails['postcode'],
+    'location': addressDetails['location'],
+    'placeId' : placeId,
+    'notifications': notifications,
+  };
+
+  // I'm setting the document data
+  await docRef.set(data);
 
   // If everything went well, I'm returning true
   return true;
@@ -304,6 +299,15 @@ Future<bool?> getNotifications(String deviceId) async {
   DocumentSnapshot doc = await docRef.get();
   Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
   return data?['notifications'];
+}
+
+// This function retrieves the placeId value for a given device ID
+Future<String?> getPlaceId(String deviceId) async {
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+  DocumentSnapshot doc = await docRef.get();
+  Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+  return data?['placeId'];
 }
 
 // This function deletes the address data for a given device ID
@@ -361,16 +365,50 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
       'wasteDates': data['wasteDates'],
     };
   }
-
-  // // I'm trying to get the documents where the 'postcode' field matches the given postcode
-  // QuerySnapshot querySnapshot =
-  //     await collectionRef.where('postcode', isEqualTo: postcode).get();
-
-  // // I'm checking if any documents were found
-  // if (querySnapshot.docs.isEmpty) {
-  //   // If no documents were found, I'm printing a message and returning null
-  //   print('No collection dates found for this postcode.');
-  //   print(querySnapshot);
-  //   return null;
-  // }
 }
+
+// Gets collection dates for a given device ID
+Future<Map<String, dynamic>?> getCollectionDatesLocally(
+    String postcode) async {
+
+  // I'm getting a reference to the Firestore document for the correct postcode
+  DocumentReference postcodeDoc =
+      FirebaseFirestore.instance.collection('CollectionDates').doc(postcode);
+
+  // I'm trying to get the document
+  DocumentSnapshot collectionDoc = await postcodeDoc.get();
+
+  // I'm checking if the document exists
+  if (!collectionDoc.exists) {
+    // If the document does not exist or the 'postcode' field is null, I'm printing a message and returning null
+    print('No document found with the postcode $postcode');
+    return null;
+  } else {
+    // If documents were found, I'm returning the 'recyclingDates' and 'wasteDates' fields of the first document
+    Map<String, dynamic> data = collectionDoc.data() as Map<String, dynamic>;
+    return {
+      'recyclingDates': data['recyclingDates'],
+      'wasteDates': data['wasteDates'],
+    };
+  }
+}
+
+Future<bool> checkDeviceHasSavedInfo(
+    String deviceId) async {
+  // I'm getting a reference to the Firestore document with the device ID
+  DocumentReference docRef =
+      FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
+
+  // I'm trying to get the document
+  DocumentSnapshot doc = await docRef.get();
+
+  // I'm checking if the document exists
+  if (doc.exists) {
+    // If the document does exist, I'm returning true
+    return true;
+  } else {
+    // If the document does not exist, I'm returning false
+    return false;
+  }
+}
+    
