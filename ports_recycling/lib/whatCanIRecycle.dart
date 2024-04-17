@@ -50,7 +50,7 @@ class _WCIRScreenState extends State<WCIRScreen> {
         const Padding(
           padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
           child: Text(
-            "Info from the council like the sticker on our boiler",
+            "Do recycle:\n  - Food & drinks cans\n  - Plastic bottles with lids on\n  -Card\n  - Paper (not shredded)\n  - Aerosols\n\nDo NOT recycle:\n  - Glass\n  - Textiles\n  - Rubbish bags & plastic bags\n  -Cartons & cups\n  - Polystyrene\n  - Other plastics\n  - Foil\n  - Shredded paper\n  - Wrappers and packets",
             textAlign: TextAlign.start,
             overflow: TextOverflow.clip,
             style: TextStyle(
