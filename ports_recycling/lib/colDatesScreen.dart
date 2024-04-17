@@ -1,42 +1,74 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ports_recycling/firebase.dart';
 import 'main.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_maps_webservice/places.dart';
+import 'package:intl/intl.dart';
 
-final myController = TextEditingController();
+
+late Future<Map<String, dynamic>?> dates;
+List<dynamic> recyclingDates = ["Loading..."];
+List<dynamic> wasteDates = ["Loading..."];
+
+Future<Map<String, dynamic>?> getDates() async {
+  if (await checkDeviceHasSavedInfo(deviceId)) {
+    dates = getCollectionDatesForDevice(deviceId);
+  } else {
+    dates = getCollectionDatesLocally(localAddress['postcode']);
+  }
+  return dates;
+}
+
+// Assuming getDates and _buildTable functions remain the same
 
 class CollDates extends StatefulWidget {
-  const CollDates({Key? key}) : super(key: key);
-
   @override
   _CollDatesState createState() => _CollDatesState();
 }
 
 class _CollDatesState extends State<CollDates> {
-  late GoogleMapController mapController;
-  TextEditingController searchController = TextEditingController();
-  late PlacesAutocompleteResponse searchResults;
+
+  @override
+  void initState() {
+    super.initState();
+    DateTime currentDate = DateTime.now();
+    currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
+    getDates().then((dates) {
+    setState(() {
+      if (dates != null) {
+      recyclingDates = dates?['recyclingDates'];
+      recyclingDates = recyclingDates
+        .where((date) =>
+          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(currentDate) ||
+          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAtSameMomentAs(currentDate))
+        .toList();
+      recyclingDates.sort((a, b) => DateTime.parse(a.replaceAll('/', '-').split('-').reversed.join('-')).compareTo(DateTime.parse(b.replaceAll('/', '-').split('-').reversed.join('-'))));
+
+      wasteDates = dates?['wasteDates'];
+      wasteDates = wasteDates
+        .where((date) =>
+          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(currentDate) ||
+          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAtSameMomentAs(currentDate))
+        .toList();
+      wasteDates.sort((a, b) => DateTime.parse(a.replaceAll('/', '-').split('-').reversed.join('-')).compareTo(DateTime.parse(b.replaceAll('/', '-').split('-').reversed.join('-'))));
+    
+    for(int i = 0; i < 5; i++) {
+      recyclingDates.add("---");
+      wasteDates.add("---");
+    }
+      }
+    });
+  });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: Scaffold(
-        backgroundColor: const Color(0xffffffff),
-        body: Stack(
-          children: [
-            SingleChildScrollView(
-    padding: const EdgeInsets.fromLTRB(20, 20, 20, 60),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
+    return Scaffold(
+      body: Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 55, 20, 30),
           child: Text(
-            "Your upcoming collections",
-            textAlign: TextAlign.start,
+            "Collection Dates",
+            textAlign: TextAlign.center,
             overflow: TextOverflow.clip,
             style: const TextStyle(
               fontWeight: FontWeight.w700,
@@ -50,7 +82,7 @@ class _CollDatesState extends State<CollDates> {
         const Padding(
           padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
           child: Text(
-            "This will be a table of dates from db",
+            "Your next collections",
             textAlign: TextAlign.start,
             overflow: TextOverflow.clip,
             style: TextStyle(
@@ -62,150 +94,205 @@ class _CollDatesState extends State<CollDates> {
           ),
         ),
 
-        // Padding(
-        //   padding: EdgeInsets.fromLTRB(0, 0, 0, 50),
-        //   child:
-        // AddressSearchBar(
-        //               controller: searchController,
-        //               onSelected: (placeId) {
-        //                 selectAddress(placeId!);
-        //               },
-        //             ),
-        // ),
-
-
-Padding(
-  padding: EdgeInsets.fromLTRB(0, 160, 0, 0),
-child:
-MaterialButton(
-                  onPressed: () {                
-                     Navigator.pop(
-                    context);
-                  },
-                  color: Colors.green,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                    side: const BorderSide(color: Colors.white, width: 2.5),
+        Container(
+          width: 310,
+          decoration: BoxDecoration(
+            color: Colors.green,
+            border: Border.all(width: 2, color: Colors.black),
+            borderRadius: const BorderRadius.all(Radius.circular(20)),
+          ),
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 15),
+          child: Card(
+            margin: const EdgeInsets.all(10),
+            elevation: 0,
+            color: Colors.green,
+            child: Column(
+              children: [
+                Text(
+                  "Your next recycling collection",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.normal,
+                    color: Colors.black,
                   ),
-                  padding: const EdgeInsets.all(12),
-                  textColor: Colors.white,
-                  height: 20,
-                  minWidth: 150,
-                  child: const Text(
-                    "Back",
+                ),
+                if (recyclingDates[0] == "Loading...")
+                  Text(recyclingDates[0]),
+                if (recyclingDates[0] != "Loading...")
+                  Text(
+                    DateFormat('EEEE d MMMM yyyy').format(DateTime.parse(recyclingDates[0].replaceAll('/', '-').split('-').reversed.join('-'))),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      fontStyle: FontStyle.normal,
+                      color: Colors.white,
                     ),
                   ),
-                ),
-),
-
-
-      ],
-    ),
-  ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ... existing code
-
-  void selectAddress(String placeId) async {
-    final places = GoogleMapsPlaces(apiKey: 'AIzaSyDFTy0iz-fmqTKm8wMkOYuVTgK4eEPr94c');
-    PlacesDetailsResponse response = await places.getDetailsByPlaceId(placeId);
-    final location = response.result.geometry?.location;
-
-    // The following dissects the selected address into each line, also providing the coordinates and postcode
-        final formattedAddress = response.result.formattedAddress;
-        final lines = formattedAddress?.split(', ');
-        final addressLines = lines?.sublist(0, lines.length - 1);
-        var postcode = addressLines!.last;
-        List<String> splitPostcode = postcode.split(' ');
-        postcode = '';
-        for (int i = 1; i < splitPostcode.length; i++) {
-          postcode = postcode + splitPostcode[i];
-          if (i == 1) {
-            postcode += ' ';
-          } 
-        }
-
-        print('Selected address:');
-        for (int i = 0; i < addressLines.length - 1; i++) {
-          print(addressLines[i]);
-        }
-        print('Postcode: $postcode');
-        print('Latitude: ${location?.lat}');
-        print('Longitude: ${location?.lng}');
-
-  }
-}
-
-class AddressSearchBar extends StatefulWidget {
-  final TextEditingController controller;
-  final ValueChanged<String?> onSelected;
-
-  AddressSearchBar({required this.controller, required this.onSelected});
-
-  @override
-  _AddressSearchBarState createState() => _AddressSearchBarState();
-}
-
-class _AddressSearchBarState extends State<AddressSearchBar> {
-  PlacesAutocompleteResponse searchResults = PlacesAutocompleteResponse(status: '', predictions: []);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TextField(
-          controller: widget.controller,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: "Search for an item",
-          ),
-          onChanged: (value) {
-            //searchPlaces(value);
-          },
-        ),
-        if (searchResults.predictions.isNotEmpty)
-          Container(
-            margin: EdgeInsets.symmetric(vertical: 5.0),
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 1,
-                  blurRadius: 5,
-                  offset: Offset(0, 3),
-                ),
               ],
             ),
+          ),
+        ),
+
+        Container(
+          width: 310,
+          decoration: BoxDecoration(
+            color: Colors.grey,
+            border: Border.all(width: 2, color: Colors.black),
+            borderRadius: const BorderRadius.all(Radius.circular(20)),
+          ),
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 15),
+          child: Card(
+            margin: const EdgeInsets.all(10),
+            elevation: 0,
+            color: Colors.grey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: searchResults.predictions
-                  .map((Prediction prediction) => ListTile(
-                        title: Text(prediction.description ?? ''),
-                        onTap: () {
-                          widget.controller.text = prediction.description ?? '';
-                          widget.onSelected(prediction.placeId ?? '');
-                          setState(() {
-                            searchResults = PlacesAutocompleteResponse(status: '', predictions: []); // Reset to an empty response
-                          });
-                        },
-                      ))
-                  .toList(),
+              children: [
+                Text(
+                  "Your next general waste collection",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.normal,
+                    color: Colors.black,
+                  ),
+                ),
+                if (wasteDates[0] == "Loading...")
+                  Text(wasteDates[0]),
+                if (wasteDates[0] != "Loading...")
+                  Text(
+                    DateFormat('EEEE d MMMM yyyy').format(DateTime.parse(wasteDates[0].replaceAll('/', '-').split('-').reversed.join('-'))),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+              ],
             ),
           ),
-      ],
+        ),
+
+        const Padding(
+          padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
+          child: Text(
+            "Future collections are as follows:",
+            textAlign: TextAlign.start,
+            overflow: TextOverflow.clip,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontStyle: FontStyle.normal,
+              fontSize: 20,
+              color: Color(0xff000000),
+            ),
+          ),
+        ),
+
+        Container(
+          //width: 300,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(width: 2, color: Colors.black),
+            borderRadius: const BorderRadius.all(Radius.circular(20)),
+          ),
+          margin: const EdgeInsets.fromLTRB(25, 10, 25, 0),
+          child: Table(
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            children: [
+              TableRow(
+                decoration: BoxDecoration(
+                  //color: Colors.white,
+                ),
+                children: [
+                  TableCell(
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Text(
+                        "Recycling",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  TableCell(
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Text(
+                        "General waste",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              for (int i = 1; i < recyclingDates.length && i <= 5; i++) 
+              TableRow(
+                children: [
+                  TableCell(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: i == recyclingDates.length - 1 || i == 5 ? BorderRadius.only(bottomLeft: Radius.circular(18)) : BorderRadius.only(bottomLeft: Radius.circular(0))
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          recyclingDates[i],
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+                  TableCell(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey,
+                        borderRadius: i == recyclingDates.length - 1 || i == 5 ? BorderRadius.only(bottomRight: Radius.circular(18)) : BorderRadius.only(bottomRight: Radius.circular(0))
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          wasteDates[i],
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
+
+        Padding(
+          padding: EdgeInsets.fromLTRB(0, 50, 0, 0),
+          child: MaterialButton(
+            onPressed: () {
+              Navigator.pop(
+                context,
+              );
+            },
+            color: Colors.green,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+              side: const BorderSide(color: Colors.white, width: 2.5),
+            ),
+            padding: const EdgeInsets.all(12),
+            textColor: Colors.white,
+            height: 20,
+            minWidth: 150,
+            child: const Text(
+              "Back",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                fontStyle: FontStyle.normal,
+              ),
+            ),
+          ),
+        ),
+      ]),
     );
   }
 }
