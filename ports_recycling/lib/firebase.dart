@@ -254,7 +254,7 @@ Future<bool?> addDeviceIdToAddresses(String placeId, bool notifications) async {
     'formattedAddress': addressDetails['formattedAddress'],
     'postcode': addressDetails['postcode'],
     'location': addressDetails['location'],
-    'placeId' : placeId,
+    'placeId': placeId,
     'notifications': notifications,
   };
 
@@ -368,9 +368,7 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
 }
 
 // Gets collection dates for a given device ID
-Future<Map<String, dynamic>?> getCollectionDatesLocally(
-    String postcode) async {
-
+Future<Map<String, dynamic>?> getCollectionDatesLocally(String postcode) async {
   // I'm getting a reference to the Firestore document for the correct postcode
   DocumentReference postcodeDoc =
       FirebaseFirestore.instance.collection('CollectionDates').doc(postcode);
@@ -393,8 +391,7 @@ Future<Map<String, dynamic>?> getCollectionDatesLocally(
   }
 }
 
-Future<bool> checkDeviceHasSavedInfo(
-    String deviceId) async {
+Future<bool> checkDeviceHasSavedInfo(String deviceId) async {
   // I'm getting a reference to the Firestore document with the device ID
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
@@ -411,4 +408,3 @@ Future<bool> checkDeviceHasSavedInfo(
     return false;
   }
 }
-    
