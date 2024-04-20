@@ -39,8 +39,16 @@ Future<void> main() async {
   if (await checkDeviceHasSavedInfo(deviceId)) {
     splashScreen = false;
     homeAddress = true;
-    notifications = (await getNotifications(deviceId))!;
-    placeIdDB = (await getPlaceId(deviceId))!;
+
+    var tempNotifications = await getNotifications(deviceId);
+    if (tempNotifications != null) {
+      notifications = tempNotifications;
+    }
+
+    var tempPlaceIdDB = await getPlaceId(deviceId);
+    if (tempPlaceIdDB != null) {
+      placeIdDB = tempPlaceIdDB;
+    }
   }
 
   // Running the app
