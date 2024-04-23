@@ -80,7 +80,7 @@ class _CollDatesState extends State<CollDates> {
         ),
 
         const Padding(
-          padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
+          padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
           child: Text(
             "Your next collections",
             textAlign: TextAlign.start,
