@@ -11,37 +11,6 @@ import 'dart:async';
 // Initializing Firebase
 final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-/*
-What we need for the database:
-
-1. Function to add the recycling points to the database:
-   - This is 1 collection with each document representing 1 recycling point, containing the fields latitude, longitude and description.
-   - See RecyclingPoints.csv.
-
-2. Function to pull the recycling points from the database, used in the 'mapScreen.dart' file:
-   - Needs to loop through all the points, calling the '_addMarker' function on each one. See line 49 in 'mapScreen.dart' file for more info.
-
-3. Function to pull materials/items that can be recycled:
-   - The user uses this to search materials/items. Needs to take whatever they search and return the document for the material that matches.
-   - This would look great with some kind of autocomplete search function, but not yet sure how to implement this.
-
-4. Function to input user/device home address and postcode:
-   - This is only to input their home address. If the user does not tick home address then the inputted address will be saved locally and forgotten when the app is closed.
-   - On the startup screen, this function takes the inputted address (Separates the fields, especially postcode needs to be separate).
-   - It would be good to find the latitude and longitude coordinates of the address so we can pin their address to the map.
-   - A collection for addresses, each document is every MAC address that has used the system, within each document is the address, coordinates of the address and if notifications are enabled (boolean).
-
-5. Function to input the collection dates:
-   - 1 collection with each document representing a postcode. There are 2 fields within the document, 1 is a list of recycling collection dates, the other is a list of general waste collection dates.
-   - This also needs a mechanism to update the home address and possibly delete it.
-
-6. Function to pull user/device home address and postcode:
-   - Will need to check if there is an address set. This gets used on startup and if no address is set then the startup screen is shown, if there is this will be skipped.
-   - Postcode needs to be pulled on the collection dates screen.
-   - Coordinates need to be pulled on the map.
-   - If there is no address set, the user needs to be asked for one before they can see collection dates.
-*/
-
 // Function to add recycling points to the 'RecyclingPoints' collection in Firestore
 Future<void> addRecyclingPoint(String description, GeoPoint location) async {
   // Creating a map of bin data
@@ -254,7 +223,7 @@ Future<bool?> addDeviceIdToAddresses(String placeId, bool notifications) async {
     'formattedAddress': addressDetails['formattedAddress'],
     'postcode': addressDetails['postcode'],
     'location': addressDetails['location'],
-    'placeId' : placeId,
+    'placeId': placeId,
     'notifications': notifications,
   };
 
@@ -368,9 +337,7 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
 }
 
 // Gets collection dates for a given device ID
-Future<Map<String, dynamic>?> getCollectionDatesLocally(
-    String postcode) async {
-
+Future<Map<String, dynamic>?> getCollectionDatesLocally(String postcode) async {
   // I'm getting a reference to the Firestore document for the correct postcode
   DocumentReference postcodeDoc =
       FirebaseFirestore.instance.collection('CollectionDates').doc(postcode);
@@ -393,8 +360,7 @@ Future<Map<String, dynamic>?> getCollectionDatesLocally(
   }
 }
 
-Future<bool> checkDeviceHasSavedInfo(
-    String deviceId) async {
+Future<bool> checkDeviceHasSavedInfo(String deviceId) async {
   // I'm getting a reference to the Firestore document with the device ID
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
@@ -411,4 +377,3 @@ Future<bool> checkDeviceHasSavedInfo(
     return false;
   }
 }
-    
