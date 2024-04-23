@@ -34,18 +34,18 @@ Future<void> main() async {
     ),
   );
 
-  deviceId = await getDeviceId();
+  deviceId = await getDeviceId(firestore);
 
-  if (await checkDeviceHasSavedInfo(deviceId)) {
+  if (await checkDeviceHasSavedInfo(firestore, deviceId)) {
     splashScreen = false;
     homeAddress = true;
 
-    var tempNotifications = await getNotifications(deviceId);
+    var tempNotifications = await getNotifications(firestore, deviceId);
     if (tempNotifications != null) {
       notifications = tempNotifications;
     }
 
-    var tempPlaceIdDB = await getPlaceId(deviceId);
+    var tempPlaceIdDB = await getPlaceId(firestore, deviceId);
     if (tempPlaceIdDB != null) {
       placeIdDB = tempPlaceIdDB;
     }
