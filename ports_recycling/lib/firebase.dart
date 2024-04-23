@@ -2,7 +2,6 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:csv/csv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:device_info/device_info.dart';
 import 'settingsScreen.dart';
@@ -10,82 +9,6 @@ import 'dart:async';
 
 // Initializing Firebase
 final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-/*
-What we need for the database:
-
-1. Function to add the recycling points to the database:
-   - This is 1 collection with each document representing 1 recycling point, containing the fields latitude, longitude and description.
-   - See RecyclingPoints.csv.
-
-2. Function to pull the recycling points from the database, used in the 'mapScreen.dart' file:
-   - Needs to loop through all the points, calling the '_addMarker' function on each one. See line 49 in 'mapScreen.dart' file for more info.
-
-3. Function to pull materials/items that can be recycled:
-   - The user uses this to search materials/items. Needs to take whatever they search and return the document for the material that matches.
-   - This would look great with some kind of autocomplete search function, but not yet sure how to implement this.
-
-4. Function to input user/device home address and postcode:
-   - This is only to input their home address. If the user does not tick home address then the inputted address will be saved locally and forgotten when the app is closed.
-   - On the startup screen, this function takes the inputted address (Separates the fields, especially postcode needs to be separate).
-   - It would be good to find the latitude and longitude coordinates of the address so we can pin their address to the map.
-   - A collection for addresses, each document is every MAC address that has used the system, within each document is the address, coordinates of the address and if notifications are enabled (boolean).
-
-5. Function to input the collection dates:
-   - 1 collection with each document representing a postcode. There are 2 fields within the document, 1 is a list of recycling collection dates, the other is a list of general waste collection dates.
-   - This also needs a mechanism to update the home address and possibly delete it.
-
-6. Function to pull user/device home address and postcode:
-   - Will need to check if there is an address set. This gets used on startup and if no address is set then the startup screen is shown, if there is this will be skipped.
-   - Postcode needs to be pulled on the collection dates screen.
-   - Coordinates need to be pulled on the map.
-   - If there is no address set, the user needs to be asked for one before they can see collection dates.
-*/
-
-// Function to add recycling points to the 'RecyclingPoints' collection in Firestore
-Future<void> addRecyclingPoint(String description, GeoPoint location) async {
-  // Creating a map of bin data
-  Map<String, dynamic> pointData = {
-    'Description': description,
-    'Location': location,
-  };
-
-  // Trying to add data to Firestore
-  try {
-    await FirebaseFirestore.instance
-        .collection('RecyclingPoints')
-        .add(pointData);
-  } catch (e) {
-    // Printing the error if any
-    print('Failed to add information: $e');
-  }
-}
-
-// Function to loop through the recycling points and add them to the database
-Future<bool> recyclingPointExists(GeoPoint location) async {
-  QuerySnapshot snapshot = await FirebaseFirestore.instance
-      .collection('RecyclingPoints')
-      .where('Location.latitude', isEqualTo: location.latitude)
-      .where('Location.longitude', isEqualTo: location.longitude)
-      .get();
-
-  return snapshot.docs.isNotEmpty;
-}
-
-Future<void> addRecyclingPointsFromCSV() async {
-  String csvData = await rootBundle.loadString('assets/RecyclingPoints.csv');
-  List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
-
-  for (int i = 1; i < csvTable.length; i++) {
-    String description = csvTable[i][3];
-    GeoPoint location = GeoPoint(csvTable[i][1], csvTable[i][2]);
-
-    bool exists = await recyclingPointExists(location);
-    if (!exists) {
-      await addRecyclingPoint(description, location);
-    }
-  }
-}
 
 // This function is called in the 'mapScreen.dart' file
 Future<List<Marker>> getMarkersFromFirestore() async {
@@ -122,34 +45,6 @@ Future<List<Marker>> getMarkersFromFirestore() async {
 
   // Return the list of markers
   return markers;
-}
-
-// Function to add recycling materials to the 'RecyclingMaterials' collection in Firestore
-Future<void> addRecyclingMaterialsFromCSV() async {
-  print('Loading CSV file...');
-  // Load and parse the CSV file
-  String csvData = await rootBundle.loadString('assets/Materials.csv');
-  List<List<dynamic>> csvTable = CsvToListConverter().convert(csvData);
-
-  // Get a reference to the Firestore collection
-  CollectionReference materials =
-      FirebaseFirestore.instance.collection('RecyclingMaterials');
-
-  // Loop through each row in the CSV file
-  for (int i = 1; i < csvTable.length; i++) {
-    // Get the data for this row
-    String materialName = csvTable[i][0];
-    bool canBeRecycled = csvTable[i][1].toLowerCase() == 'true';
-    String disposalInfo = csvTable[i][2];
-
-    // Add the material to Firestore
-    print('Adding material: $materialName');
-    await materials.doc(materialName).set({
-      'canBeRecycled': canBeRecycled,
-      'disposalInfo': disposalInfo,
-    });
-  }
-  print('Finished adding materials.');
 }
 
 // Function to query the database and return a List<String> of the title of every document
