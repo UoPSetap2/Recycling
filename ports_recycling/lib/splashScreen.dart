@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 
+FirebaseService firebaseService = RealFirebaseService();
+
 final myController = TextEditingController();
 bool saveButtonDisabled = true;
 
@@ -164,8 +166,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
                           if (homeAddress) {
                             // Save address info to DB
-                            addDeviceIdToAddresses(
-                                firestore, address!, notifications);
+                            firebaseService.addDeviceIdToAddresses(
+                                address!, notifications);
                           } else if (!homeAddress) {
                             setLocalAddress(address!, notifications);
                           }
@@ -463,10 +465,11 @@ Future<String?> getStringAddress(String placeId) async {
 }
 
 Future<String?> getAddress() async {
-  if (await getFormattedAddress(firestore, await getDeviceId(firestore)) !=
+  if (await firebaseService
+          .getFormattedAddress(await firebaseService.getDeviceId()) !=
       null) {
-    String? formattedAddress =
-        await getFormattedAddress(firestore, await getDeviceId(firestore));
+    String? formattedAddress = await firebaseService
+        .getFormattedAddress(await firebaseService.getDeviceId());
     return formattedAddress?.replaceAll(', ', ',\n');
   } else {
     return "";
@@ -476,7 +479,8 @@ Future<String?> getAddress() async {
 Future<List<bool>?> getRadioButtons() async {
   return [
     true,
-    (await getNotifications(firestore, await getDeviceId(firestore)))!
+    (await firebaseService
+        .getNotifications(await firebaseService.getDeviceId()))!
   ];
 }
 

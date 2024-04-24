@@ -7,6 +7,8 @@ import 'package:google_maps_webservice/places.dart';
 
 final myController = TextEditingController();
 
+FirebaseService firebaseService = RealFirebaseService();
+
 class ItemSearch extends StatefulWidget {
   const ItemSearch({Key? key}) : super(key: key);
 
@@ -73,7 +75,8 @@ class _ItemSearchState extends State<ItemSearch> {
                         materialName = selectedMaterial;
                       });
 
-                      getRecyclingMaterial(firestore, materialName)
+                      firebaseService
+                          .getRecyclingMaterial(materialName)
                           .then((result) {
                         setState(() {
                           materialInfo = result as Map<String, dynamic>;
@@ -248,7 +251,7 @@ class _MaterialSearchBarState extends State<MaterialSearchBar> {
 
   Future<List<String>> getFilteredSuggestions(String query) async {
     // Simulated list of suggestions
-    List<String> allMaterials = await getDocumentTitles(firestore);
+    List<String> allMaterials = await firebaseService.getDocumentTitles();
     // Filter suggestions based on query
     return allMaterials
         .where(

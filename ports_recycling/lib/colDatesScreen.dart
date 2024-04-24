@@ -8,11 +8,13 @@ late Future<Map<String, dynamic>?> dates;
 List<dynamic> recyclingDates = ["Loading..."];
 List<dynamic> wasteDates = ["Loading..."];
 
+FirebaseService firebaseService = RealFirebaseService();
+
 Future<Map<String, dynamic>?> getDates() async {
-  if (await checkDeviceHasSavedInfo(firestore, deviceId)) {
-    dates = getCollectionDatesForDevice(firestore, deviceId);
+  if (await firebaseService.checkDeviceHasSavedInfo(deviceId)) {
+    dates = firebaseService.getCollectionDatesForDevice(deviceId);
   } else {
-    dates = getCollectionDatesLocally(firestore, localAddress['postcode']);
+    dates = firebaseService.getCollectionDatesLocally(localAddress['postcode']);
   }
   return dates;
 }
