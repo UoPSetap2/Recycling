@@ -9,7 +9,6 @@ import 'package:google_maps_webservice/places.dart';
 final myController = TextEditingController();
 bool saveButtonDisabled = true;
 
-
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
 
@@ -70,119 +69,113 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
-                    child: address == ""
-                        ? AddressSearchBar(
-                            controller: searchController,
-                            onSelected: (placeId) {
-                              setState(() {
-                                searchController.clear();
-                                address = placeId!;
-                              });
-
-                              getStringAddress(address!).then((value) {
+                      padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                      child: address == ""
+                          ? AddressSearchBar(
+                              controller: searchController,
+                              onSelected: (placeId) {
                                 setState(() {
-                                  formattedAddress = value;
-                                  saveButtonDisabled = false;
+                                  searchController.clear();
+                                  address = placeId!;
                                 });
-                              });
-                              // Instead of calling select address, display the selected address here
-                              // selectAddress(address);
-                              
-                              
-                            },
-                          )
-                        : Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child:
-                            Text(
-                            formattedAddress!,
-                            textAlign: TextAlign.start,
-                            overflow: TextOverflow.clip,
-                            style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontStyle: FontStyle.normal,
-                              fontSize: 18,
-                              color: Color(0xff000000),
-                            ),
-                          ),),
-                          Expanded(
-                            flex: 1,
-                            child:
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                address = "";
-                                saveButtonDisabled = true;
-                              });
-                              print("Edit");
-                            },
-                            child: Text(
-                              "Edit",
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontSize: 16),
-                            ),
-                          ),),
-                          ],
-                        )
-                        
-                        
-                  ),
 
+                                getStringAddress(address!).then((value) {
+                                  setState(() {
+                                    formattedAddress = value;
+                                    saveButtonDisabled = false;
+                                  });
+                                });
+                                // Instead of calling select address, display the selected address here
+                                // selectAddress(address);
+                              },
+                            )
+                          : Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    formattedAddress!,
+                                    textAlign: TextAlign.start,
+                                    overflow: TextOverflow.clip,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                      fontStyle: FontStyle.normal,
+                                      fontSize: 18,
+                                      color: Color(0xff000000),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        address = "";
+                                        saveButtonDisabled = true;
+                                      });
+                                      print("Edit");
+                                    },
+                                    child: Text(
+                                      "Edit",
+                                      style: TextStyle(
+                                          color: Colors.blue, fontSize: 16),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )),
                   Padding(
-  padding: EdgeInsets.fromLTRB(0, 0, 0, 20),
-  child: SwitchExample(
-    initialValue: homeAddress,
-    isFrozen: false,
-    text: "Save as your home address", // Possibly add "(This address will be saved to our database)" under this text in small font?
-    onChanged: (value) {
-      setState(() {
-        homeAddress = value;
-        notificationsFrozen = !notificationsFrozen;
-      });
-    },
-  ),
-),
-Padding(
-  padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
-  child: SwitchExample(
-    initialValue: notifications,
-    isFrozen: notificationsFrozen,
-    text: "Receive collection reminder notifications for this address",
-    onChanged: (value) {
-      setState(() {
-        notifications = value;
-      });
-    },
-  ),
-),
-
+                    padding: EdgeInsets.fromLTRB(0, 0, 0, 20),
+                    child: SwitchExample(
+                      initialValue: homeAddress,
+                      isFrozen: false,
+                      text:
+                          "Save as your home address", // Possibly add "(This address will be saved to our database)" under this text in small font?
+                      onChanged: (value) {
+                        setState(() {
+                          homeAddress = value;
+                          notificationsFrozen = !notificationsFrozen;
+                        });
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
+                    child: SwitchExample(
+                      initialValue: notifications,
+                      isFrozen: notificationsFrozen,
+                      text:
+                          "Receive collection reminder notifications for this address",
+                      onChanged: (value) {
+                        setState(() {
+                          notifications = value;
+                        });
+                      },
+                    ),
+                  ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(0, 60, 0, 0),
                     child: MaterialButton(
                       onPressed: () {
                         if (!saveButtonDisabled) {
-                          if(notificationsFrozen) {
-                              notifications = false;
-                            }
+                          if (notificationsFrozen) {
+                            notifications = false;
+                          }
 
                           if (homeAddress) {
                             // Save address info to DB
-                            addDeviceIdToAddresses(address!, notifications);
+                            addDeviceIdToAddresses(
+                                firestore, address!, notifications);
                           } else if (!homeAddress) {
                             setLocalAddress(address!, notifications);
                           }
-                        
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const BottomNavigationBarExample()),
-                        );
 
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const BottomNavigationBarExample()),
+                          );
                         }
                       },
                       color: saveButtonDisabled ? Colors.grey : Colors.green,
@@ -205,7 +198,6 @@ Padding(
                       ),
                     ),
                   ),
-                  
                   Padding(
                     padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
                     child: GestureDetector(
@@ -310,8 +302,10 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
       language: 'en',
       types: ['address'],
       components: [Component(Component.country, 'GB')],
-      location: Location(lat: 50.819767, lng: -1.087976), // Bias results towards Portsmouth
-      radius: 5000, // This means only results within 5km of Portsmouth are shown (Remove these 2 lines to include whole of UK)
+      location: Location(
+          lat: 50.819767, lng: -1.087976), // Bias results towards Portsmouth
+      radius:
+          5000, // This means only results within 5km of Portsmouth are shown (Remove these 2 lines to include whole of UK)
     );
 
     setState(() {
@@ -344,53 +338,57 @@ class _SwitchExampleState extends State<SwitchExample> {
   @override
   void initState() {
     super.initState();
-    light = widget.initialValue; // Initialize the switch state with the provided initial value
+    light = widget
+        .initialValue; // Initialize the switch state with the provided initial value
   }
 
   @override
-Widget build(BuildContext context) {
-  return Row(
-    children: [
-      Flexible(
-        flex: 3,
-        fit: FlexFit.tight,
-        child: Text(
-          widget.text,
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.clip,
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontStyle: FontStyle.normal,
-            fontSize: 18,
-            color: widget.isFrozen ? Colors.grey : Color(0xff000000),
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Flexible(
+          flex: 3,
+          fit: FlexFit.tight,
+          child: Text(
+            widget.text,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.clip,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontStyle: FontStyle.normal,
+              fontSize: 18,
+              color: widget.isFrozen ? Colors.grey : Color(0xff000000),
+            ),
           ),
         ),
-      ),
-      Flexible(
-        flex: 1,
-        fit: FlexFit.tight,
-        child: Switch(
-          value: widget.isFrozen ? false : light,
-          activeColor: Colors.green,
-          onChanged: widget.isFrozen
-              ? null // Disable switch if frozen
-              : (bool value) {
-                  setState(() {
-                    light = value;
-                  });
-                  if (widget.onChanged != null) {
-                    widget.onChanged!(value);
-                  }
-                },
-          inactiveThumbColor: widget.isFrozen ? Color.fromARGB(255, 224, 224, 224) : null, // Set thumb color to gray when frozen
-          inactiveTrackColor: widget.isFrozen ? Colors.grey : null, // Set track color to gray when frozen
+        Flexible(
+          flex: 1,
+          fit: FlexFit.tight,
+          child: Switch(
+            value: widget.isFrozen ? false : light,
+            activeColor: Colors.green,
+            onChanged: widget.isFrozen
+                ? null // Disable switch if frozen
+                : (bool value) {
+                    setState(() {
+                      light = value;
+                    });
+                    if (widget.onChanged != null) {
+                      widget.onChanged!(value);
+                    }
+                  },
+            inactiveThumbColor: widget.isFrozen
+                ? Color.fromARGB(255, 224, 224, 224)
+                : null, // Set thumb color to gray when frozen
+            inactiveTrackColor: widget.isFrozen
+                ? Colors.grey
+                : null, // Set track color to gray when frozen
+          ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }
-}
-
 
 // Function put here so I can Import it due to visibility issues
 // I'm defining a function that takes a place ID as input and returns a map containing the
@@ -443,7 +441,6 @@ Future<Map<String, dynamic>?> selectAddress(String placeId) async {
     'postcode': postcode,
     'location': GeoPoint(location.lat, location.lng),
   };
-
 }
 
 Future<String?> getStringAddress(String placeId) async {
@@ -463,13 +460,13 @@ Future<String?> getStringAddress(String placeId) async {
   }
   // I'm getting the formatted address of the place
   return response.result.formattedAddress?.replaceAll(', ', ',\n');
-
 }
 
-
 Future<String?> getAddress() async {
-  if (await getFormattedAddress(await getDeviceId()) != null) {
-    String? formattedAddress = await getFormattedAddress(await getDeviceId());
+  if (await getFormattedAddress(firestore, await getDeviceId(firestore)) !=
+      null) {
+    String? formattedAddress =
+        await getFormattedAddress(firestore, await getDeviceId(firestore));
     return formattedAddress?.replaceAll(', ', ',\n');
   } else {
     return "";
@@ -477,13 +474,17 @@ Future<String?> getAddress() async {
 }
 
 Future<List<bool>?> getRadioButtons() async {
-  return [true, (await getNotifications(await getDeviceId()))!];
+  return [
+    true,
+    (await getNotifications(firestore, await getDeviceId(firestore)))!
+  ];
 }
 
 Future<void> setLocalAddress(String placeId, bool notifications) async {
   localAddress = (await selectAddress(placeId))!;
   localAddress['placeId'] = placeId;
   localAddress['notifications'] = notifications;
-  localAddress['formattedAddress'] = localAddress['formattedAddress'].replaceAll(', ', ',\n');
+  localAddress['formattedAddress'] =
+      localAddress['formattedAddress'].replaceAll(', ', ',\n');
   print(localAddress);
 }

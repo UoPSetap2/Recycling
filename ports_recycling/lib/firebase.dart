@@ -11,10 +11,10 @@ import 'dart:async';
 final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
 // This function is called in the 'mapScreen.dart' file
-Future<List<Marker>> getMarkersFromFirestore() async {
+Future<List<Marker>> getMarkersFromFirestore(
+    FirebaseFirestore firestore) async {
   // Get a reference to the collection
-  CollectionReference recyclingPoints =
-      FirebaseFirestore.instance.collection('RecyclingPoints');
+  CollectionReference recyclingPoints = firestore.collection('RecyclingPoints');
 
   // Get all documents in the collection
   QuerySnapshot querySnapshot = await recyclingPoints.get();
@@ -48,10 +48,10 @@ Future<List<Marker>> getMarkersFromFirestore() async {
 }
 
 // Function to query the database and return a List<String> of the title of every document
-Future<List<String>> getDocumentTitles() async {
+Future<List<String>> getDocumentTitles(FirebaseFirestore firestore) async {
   // Get a reference to the collection
   CollectionReference recyclingMaterials =
-      FirebaseFirestore.instance.collection('RecyclingMaterials');
+      firestore.collection('RecyclingMaterials');
 
   // Get all documents in the collection
   QuerySnapshot querySnapshot = await recyclingMaterials.get();
@@ -73,7 +73,8 @@ Future<List<String>> getDocumentTitles() async {
 }
 
 // Function for searching materials
-Future<Object?> getRecyclingMaterial(String materialName) async {
+Future<Object?> getRecyclingMaterial(
+    FirebaseFirestore firestore, String materialName) async {
   // Try to get the document for the material
   DocumentSnapshot doc = await FirebaseFirestore.instance
       .collection('RecyclingMaterials')
@@ -97,7 +98,7 @@ Future<Object?> getRecyclingMaterial(String materialName) async {
 }
 
 // This function retrieves the device ID
-Future<String> getDeviceId() async {
+Future<String> getDeviceId(FirebaseFirestore firestore) async {
   // I'm creating a new DeviceInfoPlugin object
   final DeviceInfoPlugin deviceInfoPlugin = new DeviceInfoPlugin();
 
@@ -122,7 +123,8 @@ Future<String> getDeviceId() async {
 }
 
 // This function adds the device ID to the 'Addresses' collection in Firestore
-Future<bool?> addDeviceIdToAddresses(String placeId, bool notifications) async {
+Future<bool?> addDeviceIdToAddresses(
+    FirebaseFirestore firestore, String placeId, bool notifications) async {
   // I'm getting the address details by calling the 'selectAddress' function
   print(placeId);
   Map<String, dynamic>? addressDetails = await selectAddress(placeId);
@@ -138,7 +140,7 @@ Future<bool?> addDeviceIdToAddresses(String placeId, bool notifications) async {
   }
 
   // I'm getting the device ID by calling the 'getDeviceId' function
-  String deviceId = await getDeviceId();
+  String deviceId = await getDeviceId(firestore);
 
   // I'm getting a reference to the Firestore document with the device ID
   DocumentReference docRef =
@@ -161,7 +163,8 @@ Future<bool?> addDeviceIdToAddresses(String placeId, bool notifications) async {
 }
 
 // This function retrieves the formatted address for a given device ID
-Future<String?> getFormattedAddress(String deviceId) async {
+Future<String?> getFormattedAddress(
+    FirebaseFirestore firestore, String deviceId) async {
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
   DocumentSnapshot doc = await docRef.get();
@@ -170,7 +173,8 @@ Future<String?> getFormattedAddress(String deviceId) async {
 }
 
 // This function retrieves the postcode for a given device ID
-Future<String?> getPostcode(String deviceId) async {
+Future<String?> getPostcode(
+    FirebaseFirestore firestore, String deviceId) async {
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
   DocumentSnapshot doc = await docRef.get();
@@ -179,7 +183,8 @@ Future<String?> getPostcode(String deviceId) async {
 }
 
 // This function retrieves the location for a given device ID
-Future<GeoPoint?> getLocation(String deviceId) async {
+Future<GeoPoint?> getLocation(
+    FirebaseFirestore firestore, String deviceId) async {
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
   DocumentSnapshot doc = await docRef.get();
@@ -188,7 +193,8 @@ Future<GeoPoint?> getLocation(String deviceId) async {
 }
 
 // This function retrieves the notifications setting for a given device ID
-Future<bool?> getNotifications(String deviceId) async {
+Future<bool?> getNotifications(
+    FirebaseFirestore firestore, String deviceId) async {
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
   DocumentSnapshot doc = await docRef.get();
@@ -197,7 +203,7 @@ Future<bool?> getNotifications(String deviceId) async {
 }
 
 // This function retrieves the placeId value for a given device ID
-Future<String?> getPlaceId(String deviceId) async {
+Future<String?> getPlaceId(FirebaseFirestore firestore, String deviceId) async {
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
   DocumentSnapshot doc = await docRef.get();
@@ -206,7 +212,8 @@ Future<String?> getPlaceId(String deviceId) async {
 }
 
 // This function deletes the address data for a given device ID
-Future<bool> deleteAddressData(String deviceId) async {
+Future<bool> deleteAddressData(
+    FirebaseFirestore firestore, String deviceId) async {
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
   DocumentSnapshot doc = await docRef.get();
@@ -221,7 +228,7 @@ Future<bool> deleteAddressData(String deviceId) async {
 
 // Gets collection dates for a given device ID
 Future<Map<String, dynamic>?> getCollectionDatesForDevice(
-    String deviceId) async {
+    FirebaseFirestore firestore, String deviceId) async {
   // I'm getting a reference to the Firestore document with the device ID
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
@@ -263,7 +270,8 @@ Future<Map<String, dynamic>?> getCollectionDatesForDevice(
 }
 
 // Gets collection dates for a given device ID
-Future<Map<String, dynamic>?> getCollectionDatesLocally(String postcode) async {
+Future<Map<String, dynamic>?> getCollectionDatesLocally(
+    FirebaseFirestore firestore, String postcode) async {
   // I'm getting a reference to the Firestore document for the correct postcode
   DocumentReference postcodeDoc =
       FirebaseFirestore.instance.collection('CollectionDates').doc(postcode);
@@ -286,7 +294,8 @@ Future<Map<String, dynamic>?> getCollectionDatesLocally(String postcode) async {
   }
 }
 
-Future<bool> checkDeviceHasSavedInfo(String deviceId) async {
+Future<bool> checkDeviceHasSavedInfo(
+    FirebaseFirestore firestore, String deviceId) async {
   // I'm getting a reference to the Firestore document with the device ID
   DocumentReference docRef =
       FirebaseFirestore.instance.collection('Addresses').doc(deviceId);
