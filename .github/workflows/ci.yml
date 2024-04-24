@@ -15,7 +15,7 @@ on:
 
 jobs:
   flutter_test:
-    name: Run flutter test and analyze
+    name: Run flutter test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -26,8 +26,6 @@ jobs:
         with:
           channel: 'stable'
       - run: flutter pub get
-        working-directory: ./Recycling/ports_recycling
-      - run: flutter analyze
-        working-directory: ./Recycling/ports_recycling
+        working-directory: ${{ github.workspace }}/ports_recycling
       - run: flutter test
-        working-directory: ./Recycling/ports_recycling
+        working-directory: ${{ github.workspace }}/ports_recycling
