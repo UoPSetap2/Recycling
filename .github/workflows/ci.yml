@@ -26,8 +26,8 @@ jobs:
         with:
           channel: 'stable'
       - run: flutter pub get
-        working-directory: ./Recycling/ports_recycling
+        working-directory: ${{ github.workspace }}/Recycling/ports_recycling
       - run: flutter analyze
-        working-directory: ./Recycling/ports_recycling
+        working-directory: ${{ github.workspace }}/Recycling/ports_recycling
       - run: flutter test
-        working-directory: ./Recycling/ports_recycling
+        working-directory: ${{ github.workspace }}/Recycling/ports_recycling
