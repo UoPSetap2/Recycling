@@ -76,10 +76,8 @@ Future<List<String>> getDocumentTitles(FirebaseFirestore firestore) async {
 Future<Object?> getRecyclingMaterial(
     FirebaseFirestore firestore, String materialName) async {
   // Try to get the document for the material
-  DocumentSnapshot doc = await FirebaseFirestore.instance
-      .collection('RecyclingMaterials')
-      .doc(materialName)
-      .get();
+  DocumentSnapshot doc =
+      await firestore.collection('RecyclingMaterials').doc(materialName).get();
 
   // Check if the document exists
   if (!doc.exists) {
@@ -274,7 +272,7 @@ Future<Map<String, dynamic>?> getCollectionDatesLocally(
     FirebaseFirestore firestore, String postcode) async {
   // I'm getting a reference to the Firestore document for the correct postcode
   DocumentReference postcodeDoc =
-      FirebaseFirestore.instance.collection('CollectionDates').doc(postcode);
+      firestore.collection('CollectionDates').doc(postcode);
 
   // I'm trying to get the document
   DocumentSnapshot collectionDoc = await postcodeDoc.get();
