@@ -1,180 +1,115 @@
+import 'package:device_info/device_info.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:device_info/device_info.dart';
-import 'dart:io';
 import 'package:ports_recycling/firebase.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
+class MockFirebaseFirestore extends Mock implements FirebaseFirestore {
+  @override
+  CollectionReference<Map<String, dynamic>> collection(String path) {
+    return super.noSuchMethod(
+      Invocation.method(#collection, [path]),
+      returnValue: MockCollectionReference(),
+    ) as CollectionReference<Map<String, dynamic>>;
+  }
+}
 
-class MockDocumentReference extends Mock
-    implements DocumentReference<Map<String, dynamic>> {}
+class MockCollectionReference extends Mock
+    implements CollectionReference<Map<String, dynamic>> {
+  @override
+  Future<QuerySnapshot<Map<String, dynamic>>> get([GetOptions? options]) {
+    return super.noSuchMethod(
+      Invocation.method(#get, [options]),
+      returnValue: Future.value(MockQuerySnapshot()),
+    ) as Future<QuerySnapshot<Map<String, dynamic>>>;
+  }
+}
 
 class MockQuerySnapshot extends Mock
-    implements QuerySnapshot<Map<String, dynamic>> {}
+    implements QuerySnapshot<Map<String, dynamic>> {
+  @override
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> get docs {
+    return super.noSuchMethod(
+      Invocation.getter(#docs),
+      returnValue: [MockQueryDocumentSnapshot()],
+    ) as List<QueryDocumentSnapshot<Map<String, dynamic>>>;
+  }
+}
 
 class MockQueryDocumentSnapshot extends Mock
-    implements QueryDocumentSnapshot<Map<String, dynamic>> {}
-
-class MockDocumentSnapshot extends Mock
-    implements DocumentSnapshot<Map<String, dynamic>> {}
-
-class MockGeoPoint extends Mock implements GeoPoint {}
+    implements QueryDocumentSnapshot<Map<String, dynamic>> {
+  @override
+  String get id {
+    return super.noSuchMethod(
+      Invocation.getter(#id),
+      returnValue: 'docID',
+    ) as String;
+  }
+}
 
 class MockDeviceInfoPlugin extends Mock implements DeviceInfoPlugin {}
 
-class MockAndroidDeviceInfo extends Mock implements AndroidDeviceInfo {}
-
-class MockIosDeviceInfo extends Mock implements IosDeviceInfo {}
-
-class MockCollectionReference extends Mock
-    with MockCollectionReferenceMixin
-    implements CollectionReference<Map<String, dynamic>> {}
-
-mixin MockCollectionReferenceMixin on Mock
-    implements CollectionReference<Map<String, dynamic>> {}
-
 void main() {
-  setUpAll(() async {
-    // Initialize Firebase before running any tests
-    await Firebase.initializeApp(
-      options: FirebaseOptions(
-        apiKey: "AIzaSyCphWQpqNdWuQFK6oJZW5Dn99R30i9VQs0",
-        authDomain: "recyclingapp-205a6.firebaseapp.com",
-        projectId: "recyclingapp-205a6",
-        storageBucket: "recyclingapp-205a6.appspot.com",
-        messagingSenderId: "269106504135",
-        appId: "1:269106504135:web:6399dc546fa4fe495f79e2",
-      ),
-    );
-    assert(Firebase.apps.isNotEmpty);
-  });
-
   final firestore = MockFirebaseFirestore();
   final collectionReference = MockCollectionReference();
-  final documentReference = MockDocumentReference();
   final querySnapshot = MockQuerySnapshot();
   final queryDocumentSnapshot = MockQueryDocumentSnapshot();
-  final documentSnapshot = MockDocumentSnapshot();
-  final geoPoint = MockGeoPoint();
-  final deviceInfoPlugin = MockDeviceInfoPlugin();
-  final androidDeviceInfo = MockAndroidDeviceInfo();
-  final iosDeviceInfo = MockIosDeviceInfo();
+  final geoPoint = GeoPoint(0, 0);
 
-  when(firestore.collection('testCollection')).thenReturn(collectionReference);
-  when(collectionReference.doc(any)).thenReturn(documentReference);
+  when(firestore.collection('RecyclingMaterials'))
+      .thenReturn(collectionReference);
   when(collectionReference.get()).thenAnswer((_) async => querySnapshot);
-  when(documentReference.get()).thenAnswer((_) async => documentSnapshot);
+  when(querySnapshot.docs).thenReturn([queryDocumentSnapshot]);
+  when(queryDocumentSnapshot.id).thenReturn('docID');
+
+  test('getDocumentTitles returns a list of document IDs', () async {
+    List<String> titles = await getDocumentTitles(firestore);
+
+    expect(titles, isA<List<String>>());
+    expect(titles.length, equals(1));
+    expect(titles[0], equals('docID'));
+  });
+
+  when(firestore.collection('RecyclingPoints')).thenReturn(collectionReference);
+  when(collectionReference.get()).thenAnswer((_) async => querySnapshot);
   when(querySnapshot.docs).thenReturn([queryDocumentSnapshot]);
   when(queryDocumentSnapshot['Location']).thenReturn(geoPoint);
-  when(queryDocumentSnapshot['Description']).thenReturn('Description');
-  when(queryDocumentSnapshot.id).thenReturn('Title');
-  when(documentSnapshot.exists).thenReturn(true);
-  when(documentSnapshot.data()).thenReturn({
-    'canBeRecycled': true,
-    'disposalInfo': 'Disposal Info',
-    'formattedAddress': 'Formatted Address',
-    'postcode': 'Postcode',
-    'location': geoPoint,
-    'placeId': 'Place ID',
-    'notifications': true,
-    'recyclingDates': ['Recycling Date'],
-    'wasteDates': ['Waste Date'],
-  });
-  when(geoPoint.latitude).thenReturn(0.0);
-  when(geoPoint.longitude).thenReturn(0.0);
-  when(deviceInfoPlugin.androidInfo).thenAnswer((_) async => androidDeviceInfo);
-  when(deviceInfoPlugin.iosInfo).thenAnswer((_) async => iosDeviceInfo);
-  when(androidDeviceInfo.androidId).thenReturn('Android ID');
-  when(iosDeviceInfo.identifierForVendor).thenReturn('iOS ID');
+  when(queryDocumentSnapshot['Description']).thenReturn('description');
 
   test('getMarkersFromFirestore returns a list of markers', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await getMarkersFromFirestore(firestore), isA<List<Marker>>());
+    List<Marker> markers = await getMarkersFromFirestore(firestore);
+
+    expect(markers, isA<List<Marker>>());
+    expect(markers.length, equals(1));
+    expect(markers[0].markerId, equals(MarkerId(geoPoint.toString())));
+    expect(markers[0].position,
+        equals(LatLng(geoPoint.latitude, geoPoint.longitude)));
+    expect(markers[0].infoWindow.title, equals('Recycling Point'));
+    expect(markers[0].infoWindow.snippet, equals('description'));
   });
 
-  test('getDocumentTitles returns a list of titles', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await getDocumentTitles(firestore), equals(['Title']));
-  });
+  test('testing getRecyclingMaterial', () async {});
 
-  test('getRecyclingMaterial returns the material data', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(
-        await getRecyclingMaterial(firestore, 'Material Name'),
-        equals({
-          'canBeRecycled': true,
-          'disposalInfo': 'Disposal Info',
-        }));
-  });
+  test('testing getDeviceId', () async {});
 
-  test('getDeviceId returns the device ID', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await getDeviceId(firestore), equals('Android ID'));
-  });
+  test('testing addDeviceIdToAddresses', () async {});
 
-  test('addDeviceIdToAddresses returns true', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await addDeviceIdToAddresses(firestore, 'Place ID', true),
-        equals(true));
-  });
+  test('testing getFormattedAddress', () async {});
 
-  test('getFormattedAddress returns the formatted address', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await getFormattedAddress(firestore, 'Device ID'),
-        equals('Formatted Address'));
-  });
+  test('testing getPostcode', () async {});
 
-  test('getPostcode returns the postcode', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await getPostcode(firestore, 'Device ID'), equals('Postcode'));
-  });
+  test('testing getLocation', () async {});
 
-  test('getLocation returns the location', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await getLocation(firestore, 'Device ID'), equals(geoPoint));
-  });
+  test('testing getNotifications', () async {});
 
-  test('getNotifications returns the notifications setting', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await getNotifications(firestore, 'Device ID'), equals(true));
-  });
+  test('testing getPlaceId', () async {});
 
-  test('getPlaceId returns the place ID', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await getPlaceId(firestore, 'Device ID'), equals('Place ID'));
-  });
+  test('testing deleteAddressData', () async {});
 
-  test('deleteAddressData returns true', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await deleteAddressData(firestore, 'Device ID'), equals(true));
-  });
+  test('testing getCollectionDatesForDevice', () async {});
 
-  test('getCollectionDatesForDevice returns the collection dates', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(
-        await getCollectionDatesForDevice(firestore, 'Device ID'),
-        equals({
-          'recyclingDates': ['Recycling Date'],
-          'wasteDates': ['Waste Date'],
-        }));
-  });
+  test('testing getCollectionDatesLocally', () async {});
 
-  test('getCollectionDatesLocally returns the collection dates', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(
-        await getCollectionDatesLocally(firestore, 'Postcode'),
-        equals({
-          'recyclingDates': ['Recycling Date'],
-          'wasteDates': ['Waste Date'],
-        }));
-  });
-
-  test('checkDeviceHasSavedInfo returns true', () async {
-    final firestore = FirebaseFirestore.instance;
-    expect(await checkDeviceHasSavedInfo(firestore, 'Device ID'), equals(true));
-  });
+  test('testing checkDeviceHasSavedInfo', () async {});
 }

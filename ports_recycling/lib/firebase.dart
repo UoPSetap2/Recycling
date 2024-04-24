@@ -51,7 +51,7 @@ Future<List<Marker>> getMarkersFromFirestore(
 Future<List<String>> getDocumentTitles(FirebaseFirestore firestore) async {
   // Get a reference to the collection
   CollectionReference recyclingMaterials =
-      FirebaseFirestore.instance.collection('RecyclingMaterials');
+      firestore.collection('RecyclingMaterials');
 
   // Get all documents in the collection
   QuerySnapshot querySnapshot = await recyclingMaterials.get();
