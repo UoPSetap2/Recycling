@@ -50,6 +50,10 @@ class MockQueryDocumentSnapshot extends Mock
 
 class MockDeviceInfoPlugin extends Mock implements DeviceInfoPlugin {}
 
+class MockSelectAddress extends Mock {
+  Future<Map<String, dynamic>?> call(String placeId);
+}
+
 void main() {
   final firestore = MockFirebaseFirestore();
   final collectionReference = MockCollectionReference();
@@ -66,9 +70,10 @@ void main() {
   test('getDocumentTitles returns a list of document IDs', () async {
     List<String> titles = await getDocumentTitles(firestore);
 
-    expect(titles, isA<List<String>>());
-    expect(titles.length, equals(1));
-    expect(titles[0], equals('docID'));
+    expect(titles, isA<List<String>>(), reason: 'titles is not a List<String>');
+    expect(titles.length, equals(1), reason: 'titles list length is not 1');
+    expect(titles[0], equals('docID'),
+        reason: 'First title does not match expected document ID');
   });
 
   when(firestore.collection('RecyclingPoints')).thenReturn(collectionReference);
@@ -76,17 +81,21 @@ void main() {
   when(querySnapshot.docs).thenReturn([queryDocumentSnapshot]);
   when(queryDocumentSnapshot['Location']).thenReturn(geoPoint);
   when(queryDocumentSnapshot['Description']).thenReturn('description');
-
   test('getMarkersFromFirestore returns a list of markers', () async {
     List<Marker> markers = await getMarkersFromFirestore(firestore);
 
-    expect(markers, isA<List<Marker>>());
-    expect(markers.length, equals(1));
-    expect(markers[0].markerId, equals(MarkerId(geoPoint.toString())));
+    expect(markers, isA<List<Marker>>(),
+        reason: 'markers is not a List<Marker>');
+    expect(markers.length, equals(1), reason: 'markers list length is not 1');
+    expect(markers[0].markerId, equals(MarkerId(geoPoint.toString())),
+        reason: 'markerId does not match');
     expect(markers[0].position,
-        equals(LatLng(geoPoint.latitude, geoPoint.longitude)));
-    expect(markers[0].infoWindow.title, equals('Recycling Point'));
-    expect(markers[0].infoWindow.snippet, equals('description'));
+        equals(LatLng(geoPoint.latitude, geoPoint.longitude)),
+        reason: 'marker position does not match');
+    expect(markers[0].infoWindow.title, equals('Recycling Point'),
+        reason: 'infoWindow title does not match');
+    expect(markers[0].infoWindow.snippet, equals('description'),
+        reason: 'infoWindow snippet does not match');
   });
 
   test('testing getRecyclingMaterial', () async {});
