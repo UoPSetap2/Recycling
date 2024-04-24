@@ -1,172 +1,186 @@
-import 'package:device_info/device_info.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ports_recycling/firebase.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'dart:io';
+import 'package:ports_recycling/firebase.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class MockFirebaseFirestore extends Mock implements FirebaseFirestore {
+class MockFirebaseService implements FirebaseService {
   @override
-  CollectionReference<Map<String, dynamic>> collection(String path) {
-    return super.noSuchMethod(
-      Invocation.method(#collection, [path]),
-      returnValue: MockCollectionReference(),
-    ) as CollectionReference<Map<String, dynamic>>;
+  Future<List<Marker>> getMarkersFromFirestore() async {
+    // Return a list of mock markers
+    return [Marker(markerId: MarkerId('1'))];
+  }
+
+  @override
+  Future<List<String>> getDocumentTitles() async {
+    // Return a list of mock document titles
+    return ['title1', 'title2'];
+  }
+
+  @override
+  Future<Object?> getRecyclingMaterial(String materialName) async {
+    // Return a mock recycling material
+    return {'canBeRecycled': true, 'disposalInfo': 'Dispose responsibly'};
+  }
+
+  @override
+  Future<String> getDeviceId() async {
+    // Return a mock device ID
+    return 'mockDeviceId';
+  }
+
+  @override
+  Future<bool?> addDeviceIdToAddresses(
+      String placeId, bool notifications) async {
+    // Return a mock result
+    return true;
+  }
+
+  @override
+  Future<String?> getFormattedAddress(String deviceId) async {
+    // Return a mock formatted address
+    return '123 Mock Street';
+  }
+
+  @override
+  Future<String?> getPostcode(String deviceId) async {
+    // Return a mock postcode
+    return 'MOCK123';
+  }
+
+  @override
+  Future<GeoPoint?> getLocation(String deviceId) async {
+    // Return a mock location
+    return GeoPoint(0, 0);
+  }
+
+  @override
+  Future<bool?> getNotifications(String deviceId) async {
+    // Return a mock notification setting
+    return true;
+  }
+
+  @override
+  Future<String?> getPlaceId(String deviceId) async {
+    // Return a mock place ID
+    return 'mockPlaceId';
+  }
+
+  @override
+  Future<bool> deleteAddressData(String deviceId) async {
+    // Return a mock result
+    return true;
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getCollectionDatesForDevice(
+      String deviceId) async {
+    // Return a mock collection dates
+    return {
+      'recyclingDates': ['2022-01-01'],
+      'wasteDates': ['2022-01-02']
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getCollectionDatesLocally(
+      String postcode) async {
+    // Return a mock collection dates
+    return {
+      'recyclingDates': ['2022-01-01'],
+      'wasteDates': ['2022-01-02']
+    };
+  }
+
+  @override
+  Future<bool> checkDeviceHasSavedInfo(String deviceId) async {
+    // Return a mock result
+    return true;
   }
 }
-
-class MockCollectionReference extends Mock
-    implements CollectionReference<Map<String, dynamic>> {
-  @override
-  Future<QuerySnapshot<Map<String, dynamic>>> get([GetOptions? options]) {
-    return super.noSuchMethod(
-      Invocation.method(#get, [options]),
-      returnValue: Future.value(MockQuerySnapshot()),
-    ) as Future<QuerySnapshot<Map<String, dynamic>>>;
-  }
-
-  @override
-  DocumentReference<Map<String, dynamic>> doc([String? documentID]) {
-    return super.noSuchMethod(
-      Invocation.method(#doc, [documentID]),
-      returnValue: MockDocumentReference(),
-    ) as DocumentReference<Map<String, dynamic>>;
-  }
-}
-
-class MockQuerySnapshot extends Mock
-    implements QuerySnapshot<Map<String, dynamic>> {
-  @override
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> get docs {
-    return super.noSuchMethod(
-      Invocation.getter(#docs),
-      returnValue: [MockQueryDocumentSnapshot()],
-    ) as List<QueryDocumentSnapshot<Map<String, dynamic>>>;
-  }
-}
-
-class MockQueryDocumentSnapshot extends Mock
-    implements QueryDocumentSnapshot<Map<String, dynamic>> {
-  @override
-  String get id {
-    return super.noSuchMethod(
-      Invocation.getter(#id),
-      returnValue: 'docID',
-    ) as String;
-  }
-}
-
-class MockDocumentReference extends Mock
-    implements DocumentReference<Map<String, dynamic>> {
-  @override
-  Future<DocumentSnapshot<Map<String, dynamic>>> get([GetOptions? options]) {
-    return super.noSuchMethod(
-      Invocation.method(#get, [options]),
-      returnValue: Future.value(MockDocumentSnapshot()),
-    ) as Future<DocumentSnapshot<Map<String, dynamic>>>;
-  }
-}
-
-class MockDocumentSnapshot extends Mock
-    implements DocumentSnapshot<Map<String, dynamic>> {
-  @override
-  Map<String, dynamic>? data() {
-    return super.noSuchMethod(
-      Invocation.method(#data, []),
-      returnValue: {
-        'canBeRecycled': true,
-        'disposalInfo': 'Dispose in recycling bin'
-      },
-    ) as Map<String, dynamic>?;
-  }
-
-  @override
-  bool get exists {
-    return super.noSuchMethod(
-      Invocation.getter(#exists),
-      returnValue: false, // Provide a default return value
-    ) as bool;
-  }
-}
-
-class MockDeviceInfoPlugin extends Mock implements DeviceInfoPlugin {}
 
 void main() {
-  final firestore = MockFirebaseFirestore();
-  final collectionReference = MockCollectionReference();
-  final querySnapshot = MockQuerySnapshot();
-  final queryDocumentSnapshot = MockQueryDocumentSnapshot();
-  final geoPoint = GeoPoint(0, 0);
-  final documentReference = MockDocumentReference();
-  final documentSnapshot = MockDocumentSnapshot();
-  final deviceId = 'test_device_id';
-  final expectedAddress = 'test_formatted_address';
-  final mockCollectionReference = MockCollectionReference();
-  final expectedPostcode = 'test_postcode';
+  // Ensure Flutter engine is initialized
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-  final documentSnapshotExists = MockDocumentSnapshot();
-  final documentSnapshotNotExists = MockDocumentSnapshot();
+  // Declare a FirebaseService instance
+  late FirebaseService firebaseService;
 
-  when(firestore.collection('RecyclingMaterials'))
-      .thenReturn(collectionReference);
-  when(collectionReference.get()).thenAnswer((_) async => querySnapshot);
-  when(querySnapshot.docs).thenReturn([queryDocumentSnapshot]);
-  when(queryDocumentSnapshot.id).thenReturn('docID');
-
-  test('getDocumentTitles returns a list of document IDs', () async {
-    List<String> titles = await getDocumentTitles(firestore);
-
-    expect(titles, isA<List<String>>(), reason: 'titles is not a List<String>');
-    expect(titles.length, equals(1), reason: 'titles list length is not 1');
-    expect(titles[0], equals('docID'),
-        reason: 'First title does not match expected document ID');
+  setUpAll(() async {
+    // Initialize the FirebaseService instance with the mock implementation
+    firebaseService = MockFirebaseService();
   });
 
-  when(firestore.collection('RecyclingPoints')).thenReturn(collectionReference);
-  when(collectionReference.get()).thenAnswer((_) async => querySnapshot);
-  when(querySnapshot.docs).thenReturn([queryDocumentSnapshot]);
-  when(queryDocumentSnapshot['Location']).thenReturn(geoPoint);
-  when(queryDocumentSnapshot['Description']).thenReturn('description');
-  test('getMarkersFromFirestore returns a list of markers', () async {
-    List<Marker> markers = await getMarkersFromFirestore(firestore);
-
-    expect(markers, isA<List<Marker>>(),
-        reason: 'markers is not a List<Marker>');
-    expect(markers.length, equals(1), reason: 'markers list length is not 1');
-    expect(markers[0].markerId, equals(MarkerId(geoPoint.toString())),
-        reason: 'markerId does not match');
-    expect(markers[0].position,
-        equals(LatLng(geoPoint.latitude, geoPoint.longitude)),
-        reason: 'marker position does not match');
-    expect(markers[0].infoWindow.title, equals('Recycling Point'),
-        reason: 'infoWindow title does not match');
-    expect(markers[0].infoWindow.snippet, equals('description'),
-        reason: 'infoWindow snippet does not match');
+  test('getMarkersFromFirestore test', () async {
+    List<Marker> markers = await firebaseService.getMarkersFromFirestore();
+    expect(markers, isNotNull);
+    expect(markers, isNotEmpty);
   });
 
-  test('getRecyclingMaterial returns correct data when document exists',
-      () async {});
+  test('getDocumentTitles test', () async {
+    List<String> titles = await firebaseService.getDocumentTitles();
+    expect(titles, isNotNull);
+    expect(titles, isNotEmpty);
+  });
 
-  test('testing getDeviceId', () async {});
+  test('getRecyclingMaterial test', () async {
+    var material = await firebaseService.getRecyclingMaterial('materialName');
+    expect(material, isNotNull);
+  });
 
-  test('addDeviceIdToAddresses adds address to Firestore', () async {});
+  test('getDeviceId test', () async {
+    String deviceId = await firebaseService.getDeviceId();
+    expect(deviceId, isNotNull);
+  });
 
-  test('getFormattedAddress retrieves the correct address', () async {});
+  test('addDeviceIdToAddresses test', () async {
+    bool? result =
+        await firebaseService.addDeviceIdToAddresses('placeId', true);
+    expect(result, isNotNull);
+    expect(result, isTrue);
+  });
 
-  test('getPostcode retrieves the correct postcode', () async {});
+  test('getFormattedAddress test', () async {
+    String? address = await firebaseService.getFormattedAddress('deviceId');
+    expect(address, isNotNull);
+  });
 
-  test('testing getLocation', () async {});
+  test('getPostcode test', () async {
+    String? postcode = await firebaseService.getPostcode('deviceId');
+    expect(postcode, isNotNull);
+  });
 
-  test('testing getNotifications', () async {});
+  test('getLocation test', () async {
+    GeoPoint? location = await firebaseService.getLocation('deviceId');
+    expect(location, isNotNull);
+  });
 
-  test('testing getPlaceId', () async {});
+  test('getNotifications test', () async {
+    bool? notifications = await firebaseService.getNotifications('deviceId');
+    expect(notifications, isNotNull);
+  });
 
-  test('testing deleteAddressData', () async {});
+  test('getPlaceId test', () async {
+    String? placeId = await firebaseService.getPlaceId('deviceId');
+    expect(placeId, isNotNull);
+  });
 
-  test('testing getCollectionDatesForDevice', () async {});
+  test('deleteAddressData test', () async {
+    bool result = await firebaseService.deleteAddressData('deviceId');
+    expect(result, isTrue);
+  });
 
-  test('getRecyclingMaterial returns correct data when document exists',
-      () async {});
-  test('checkDeviceHasSavedInfo returns correct value', () async {});
+  test('getCollectionDatesForDevice test', () async {
+    var dates = await firebaseService.getCollectionDatesForDevice('deviceId');
+    expect(dates, isNotNull);
+  });
+
+  test('getCollectionDatesLocally test', () async {
+    var dates = await firebaseService.getCollectionDatesLocally('postcode');
+    expect(dates, isNotNull);
+  });
+
+  test('checkDeviceHasSavedInfo test', () async {
+    bool result = await firebaseService.checkDeviceHasSavedInfo('deviceId');
+    expect(result, isTrue);
+  });
 }

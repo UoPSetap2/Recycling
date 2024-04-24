@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 
+FirebaseService firebaseService = RealFirebaseService();
+
 final myController = TextEditingController();
 bool saveButtonDisabled = true;
 bool deleteButtonDisabled = true;
@@ -30,9 +32,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    checkDeviceHasSavedInfo(firestore, deviceId).then((hasSavedInfo) {
+    firebaseService.checkDeviceHasSavedInfo(deviceId).then((hasSavedInfo) {
       if (hasSavedInfo) {
-        getPlaceId(firestore, deviceId).then((placeId) {
+        firebaseService.getPlaceId(deviceId).then((placeId) {
           getStringAddress(placeId!).then((formattedAddressDB) {
             setState(() {
               address = placeId;
@@ -222,8 +224,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           if (homeAddress) {
                             // Save address info to DB
                             //print(placeIdDB);
-                            addDeviceIdToAddresses(
-                                firestore, address!, notifications);
+                            firebaseService.addDeviceIdToAddresses(
+                                address!, notifications);
                           } else if (!homeAddress) {
                             setLocalAddress(address!, notifications);
                           }
@@ -259,8 +261,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: MaterialButton(
                       onPressed: () async {
                         if (!deleteButtonDisabled) {
-                          deleteAddressData(
-                              firestore, await getDeviceId(firestore));
+                          firebaseService.deleteAddressData(
+                              await firebaseService.getDeviceId());
                           setState(() {
                             deleteButtonDisabled = true;
                             address = "";
@@ -558,7 +560,8 @@ Future<String?> getStringAddress(String placeId) async {
 Future<List<bool>?> getRadioButtons() async {
   return [
     true,
-    (await getNotifications(firestore, await getDeviceId(firestore)))!
+    (await firebaseService
+        .getNotifications(await firebaseService.getDeviceId()))!
   ];
 }
 

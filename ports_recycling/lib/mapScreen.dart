@@ -5,6 +5,8 @@ import 'main.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+FirebaseService firebaseService = RealFirebaseService();
+
 class MapScreen extends StatefulWidget {
   @override
   _MapScreenState createState() => _MapScreenState();
@@ -20,9 +22,9 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    checkDeviceHasSavedInfo(firestore, deviceId).then((hasSavedInfo) {
+    firebaseService.checkDeviceHasSavedInfo(deviceId).then((hasSavedInfo) {
       if (hasSavedInfo) {
-        getLocation(firestore, deviceId).then((location) {
+        firebaseService.getLocation(deviceId).then((location) {
           setState(() {
             home = location!;
           });
@@ -68,7 +70,7 @@ class _MapScreenState extends State<MapScreen> {
 
   addMarkersToMap() async {
     try {
-      List<Marker> newMarkers = await getMarkersFromFirestore(firestore);
+      List<Marker> newMarkers = await firebaseService.getMarkersFromFirestore();
       for (Marker marker in newMarkers) {
         _addMarker(marker.position, marker.infoWindow.title ?? '',
             marker.infoWindow.snippet ?? '', marker.icon);

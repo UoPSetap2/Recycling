@@ -11,6 +11,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+FirebaseService firebaseService = RealFirebaseService();
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -22,9 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    checkDeviceHasSavedInfo(firestore, deviceId).then((hasSavedInfo) {
+    firebaseService.checkDeviceHasSavedInfo(deviceId).then((hasSavedInfo) {
       if (hasSavedInfo) {
-        getNotifications(firestore, deviceId).then((notifications) {
+        firebaseService.getNotifications(deviceId).then((notifications) {
           if (notifications != null && notifications) {
             DateTime currentDate = DateTime.now();
             currentDate =
@@ -160,8 +162,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         EdgeInsets.fromLTRB(10, 25, 10, 10),
                                     child: MaterialButton(
                                       onPressed: () async {
-                                        if (await checkDeviceHasSavedInfo(
-                                                firestore, deviceId) ||
+                                        if (await firebaseService
+                                                .checkDeviceHasSavedInfo(
+                                                    deviceId) ||
                                             localAddress.isNotEmpty) {
                                           Navigator.push(
                                             context,
