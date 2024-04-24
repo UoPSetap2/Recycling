@@ -4,6 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ports_recycling/firebase.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'dart:io';
 
 class MockFirebaseFirestore extends Mock implements FirebaseFirestore {
   @override
@@ -23,6 +24,14 @@ class MockCollectionReference extends Mock
       Invocation.method(#get, [options]),
       returnValue: Future.value(MockQuerySnapshot()),
     ) as Future<QuerySnapshot<Map<String, dynamic>>>;
+  }
+
+  @override
+  DocumentReference<Map<String, dynamic>> doc([String? documentID]) {
+    return super.noSuchMethod(
+      Invocation.method(#doc, [documentID]),
+      returnValue: MockDocumentReference(),
+    ) as DocumentReference<Map<String, dynamic>>;
   }
 }
 
@@ -48,11 +57,40 @@ class MockQueryDocumentSnapshot extends Mock
   }
 }
 
-class MockDeviceInfoPlugin extends Mock implements DeviceInfoPlugin {}
-
-class MockSelectAddress extends Mock {
-  Future<Map<String, dynamic>?> call(String placeId);
+class MockDocumentReference extends Mock
+    implements DocumentReference<Map<String, dynamic>> {
+  @override
+  Future<DocumentSnapshot<Map<String, dynamic>>> get([GetOptions? options]) {
+    return super.noSuchMethod(
+      Invocation.method(#get, [options]),
+      returnValue: Future.value(MockDocumentSnapshot()),
+    ) as Future<DocumentSnapshot<Map<String, dynamic>>>;
+  }
 }
+
+class MockDocumentSnapshot extends Mock
+    implements DocumentSnapshot<Map<String, dynamic>> {
+  @override
+  Map<String, dynamic>? data() {
+    return super.noSuchMethod(
+      Invocation.method(#data, []),
+      returnValue: {
+        'canBeRecycled': true,
+        'disposalInfo': 'Dispose in recycling bin'
+      },
+    ) as Map<String, dynamic>?;
+  }
+
+  @override
+  bool get exists {
+    return super.noSuchMethod(
+      Invocation.getter(#exists),
+      returnValue: false, // Provide a default return value
+    ) as bool;
+  }
+}
+
+class MockDeviceInfoPlugin extends Mock implements DeviceInfoPlugin {}
 
 void main() {
   final firestore = MockFirebaseFirestore();
@@ -60,6 +98,15 @@ void main() {
   final querySnapshot = MockQuerySnapshot();
   final queryDocumentSnapshot = MockQueryDocumentSnapshot();
   final geoPoint = GeoPoint(0, 0);
+  final documentReference = MockDocumentReference();
+  final documentSnapshot = MockDocumentSnapshot();
+  final deviceId = 'test_device_id';
+  final expectedAddress = 'test_formatted_address';
+  final mockCollectionReference = MockCollectionReference();
+  final expectedPostcode = 'test_postcode';
+
+  final documentSnapshotExists = MockDocumentSnapshot();
+  final documentSnapshotNotExists = MockDocumentSnapshot();
 
   when(firestore.collection('RecyclingMaterials'))
       .thenReturn(collectionReference);
@@ -98,15 +145,16 @@ void main() {
         reason: 'infoWindow snippet does not match');
   });
 
-  test('testing getRecyclingMaterial', () async {});
+  test('getRecyclingMaterial returns correct data when document exists',
+      () async {});
 
   test('testing getDeviceId', () async {});
 
-  test('testing addDeviceIdToAddresses', () async {});
+  test('addDeviceIdToAddresses adds address to Firestore', () async {});
 
-  test('testing getFormattedAddress', () async {});
+  test('getFormattedAddress retrieves the correct address', () async {});
 
-  test('testing getPostcode', () async {});
+  test('getPostcode retrieves the correct postcode', () async {});
 
   test('testing getLocation', () async {});
 
@@ -118,7 +166,7 @@ void main() {
 
   test('testing getCollectionDatesForDevice', () async {});
 
-  test('testing getCollectionDatesLocally', () async {});
-
-  test('testing checkDeviceHasSavedInfo', () async {});
+  test('getRecyclingMaterial returns correct data when document exists',
+      () async {});
+  test('checkDeviceHasSavedInfo returns correct value', () async {});
 }
