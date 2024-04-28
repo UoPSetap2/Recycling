@@ -4,16 +4,17 @@ import 'main.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-
 late Future<Map<String, dynamic>?> dates;
 List<dynamic> recyclingDates = ["Loading..."];
 List<dynamic> wasteDates = ["Loading..."];
 
+FirebaseService firebaseService = RealFirebaseService();
+
 Future<Map<String, dynamic>?> getDates() async {
-  if (await checkDeviceHasSavedInfo(deviceId)) {
-    dates = getCollectionDatesForDevice(deviceId);
+  if (await firebaseService.checkDeviceHasSavedInfo(deviceId)) {
+    dates = firebaseService.getCollectionDatesForDevice(deviceId);
   } else {
-    dates = getCollectionDatesLocally(localAddress['postcode']);
+    dates = firebaseService.getCollectionDatesLocally(localAddress['postcode']);
   }
   return dates;
 }
@@ -26,38 +27,64 @@ class CollDates extends StatefulWidget {
 }
 
 class _CollDatesState extends State<CollDates> {
-
   @override
   void initState() {
     super.initState();
     DateTime currentDate = DateTime.now();
-    currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
+    currentDate =
+        DateTime(currentDate.year, currentDate.month, currentDate.day);
     getDates().then((dates) {
-    setState(() {
-      if (dates != null) {
-      recyclingDates = dates?['recyclingDates'];
-      recyclingDates = recyclingDates
-        .where((date) =>
-          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(currentDate) ||
-          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAtSameMomentAs(currentDate))
-        .toList();
-      recyclingDates.sort((a, b) => DateTime.parse(a.replaceAll('/', '-').split('-').reversed.join('-')).compareTo(DateTime.parse(b.replaceAll('/', '-').split('-').reversed.join('-'))));
+      setState(() {
+        if (dates != null) {
+          recyclingDates = dates?['recyclingDates'];
+          recyclingDates = recyclingDates
+              .where((date) =>
+                  DateTime.parse(date
+                          .replaceAll('/', '-')
+                          .split('-')
+                          .reversed
+                          .join('-'))
+                      .isAfter(currentDate) ||
+                  DateTime.parse(date
+                          .replaceAll('/', '-')
+                          .split('-')
+                          .reversed
+                          .join('-'))
+                      .isAtSameMomentAs(currentDate))
+              .toList();
+          recyclingDates.sort((a, b) => DateTime.parse(
+                  a.replaceAll('/', '-').split('-').reversed.join('-'))
+              .compareTo(DateTime.parse(
+                  b.replaceAll('/', '-').split('-').reversed.join('-'))));
 
-      wasteDates = dates?['wasteDates'];
-      wasteDates = wasteDates
-        .where((date) =>
-          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAfter(currentDate) ||
-          DateTime.parse(date.replaceAll('/', '-').split('-').reversed.join('-')).isAtSameMomentAs(currentDate))
-        .toList();
-      wasteDates.sort((a, b) => DateTime.parse(a.replaceAll('/', '-').split('-').reversed.join('-')).compareTo(DateTime.parse(b.replaceAll('/', '-').split('-').reversed.join('-'))));
-    
-    for(int i = 0; i < 5; i++) {
-      recyclingDates.add("---");
-      wasteDates.add("---");
-    }
-      }
+          wasteDates = dates?['wasteDates'];
+          wasteDates = wasteDates
+              .where((date) =>
+                  DateTime.parse(date
+                          .replaceAll('/', '-')
+                          .split('-')
+                          .reversed
+                          .join('-'))
+                      .isAfter(currentDate) ||
+                  DateTime.parse(date
+                          .replaceAll('/', '-')
+                          .split('-')
+                          .reversed
+                          .join('-'))
+                      .isAtSameMomentAs(currentDate))
+              .toList();
+          wasteDates.sort((a, b) => DateTime.parse(
+                  a.replaceAll('/', '-').split('-').reversed.join('-'))
+              .compareTo(DateTime.parse(
+                  b.replaceAll('/', '-').split('-').reversed.join('-'))));
+
+          for (int i = 0; i < 5; i++) {
+            recyclingDates.add("---");
+            wasteDates.add("---");
+          }
+        }
+      });
     });
-  });
   }
 
   @override
@@ -78,9 +105,8 @@ class _CollDatesState extends State<CollDates> {
             ),
           ),
         ),
-
         const Padding(
-          padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
+          padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
           child: Text(
             "Your next collections",
             textAlign: TextAlign.start,
@@ -93,7 +119,6 @@ class _CollDatesState extends State<CollDates> {
             ),
           ),
         ),
-
         Container(
           width: 310,
           decoration: BoxDecoration(
@@ -116,11 +141,15 @@ class _CollDatesState extends State<CollDates> {
                     color: Colors.black,
                   ),
                 ),
-                if (recyclingDates[0] == "Loading...")
-                  Text(recyclingDates[0]),
+                if (recyclingDates[0] == "Loading...") Text(recyclingDates[0]),
                 if (recyclingDates[0] != "Loading...")
                   Text(
-                    DateFormat('EEEE d MMMM yyyy').format(DateTime.parse(recyclingDates[0].replaceAll('/', '-').split('-').reversed.join('-'))),
+                    DateFormat('EEEE d MMMM yyyy').format(DateTime.parse(
+                        recyclingDates[0]
+                            .replaceAll('/', '-')
+                            .split('-')
+                            .reversed
+                            .join('-'))),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -131,7 +160,6 @@ class _CollDatesState extends State<CollDates> {
             ),
           ),
         ),
-
         Container(
           width: 310,
           decoration: BoxDecoration(
@@ -154,11 +182,15 @@ class _CollDatesState extends State<CollDates> {
                     color: Colors.black,
                   ),
                 ),
-                if (wasteDates[0] == "Loading...")
-                  Text(wasteDates[0]),
+                if (wasteDates[0] == "Loading...") Text(wasteDates[0]),
                 if (wasteDates[0] != "Loading...")
                   Text(
-                    DateFormat('EEEE d MMMM yyyy').format(DateTime.parse(wasteDates[0].replaceAll('/', '-').split('-').reversed.join('-'))),
+                    DateFormat('EEEE d MMMM yyyy').format(DateTime.parse(
+                        wasteDates[0]
+                            .replaceAll('/', '-')
+                            .split('-')
+                            .reversed
+                            .join('-'))),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -169,7 +201,6 @@ class _CollDatesState extends State<CollDates> {
             ),
           ),
         ),
-
         const Padding(
           padding: EdgeInsets.fromLTRB(0, 30, 0, 10),
           child: Text(
@@ -184,7 +215,6 @@ class _CollDatesState extends State<CollDates> {
             ),
           ),
         ),
-
         Container(
           //width: 300,
           decoration: BoxDecoration(
@@ -198,8 +228,8 @@ class _CollDatesState extends State<CollDates> {
             children: [
               TableRow(
                 decoration: BoxDecoration(
-                  //color: Colors.white,
-                ),
+                    //color: Colors.white,
+                    ),
                 children: [
                   TableCell(
                     child: Padding(
@@ -223,47 +253,52 @@ class _CollDatesState extends State<CollDates> {
                   ),
                 ],
               ),
-
-              for (int i = 1; i < recyclingDates.length && i <= 5; i++) 
-              TableRow(
-                children: [
-                  TableCell(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: i == recyclingDates.length - 1 || i == 5 ? BorderRadius.only(bottomLeft: Radius.circular(18)) : BorderRadius.only(bottomLeft: Radius.circular(0))
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          recyclingDates[i],
-                          textAlign: TextAlign.center,
+              for (int i = 1; i < recyclingDates.length && i <= 5; i++)
+                TableRow(
+                  children: [
+                    TableCell(
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius:
+                                i == recyclingDates.length - 1 || i == 5
+                                    ? BorderRadius.only(
+                                        bottomLeft: Radius.circular(18))
+                                    : BorderRadius.only(
+                                        bottomLeft: Radius.circular(0))),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            recyclingDates[i],
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  TableCell(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: i == recyclingDates.length - 1 || i == 5 ? BorderRadius.only(bottomRight: Radius.circular(18)) : BorderRadius.only(bottomRight: Radius.circular(0))
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          wasteDates[i],
-                          textAlign: TextAlign.center,
+                    TableCell(
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius:
+                                i == recyclingDates.length - 1 || i == 5
+                                    ? BorderRadius.only(
+                                        bottomRight: Radius.circular(18))
+                                    : BorderRadius.only(
+                                        bottomRight: Radius.circular(0))),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            wasteDates[i],
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           ),
         ),
-        
-
         Padding(
           padding: EdgeInsets.fromLTRB(0, 50, 0, 0),
           child: MaterialButton(

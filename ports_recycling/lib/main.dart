@@ -1,5 +1,4 @@
 // Importing necessary libraries
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ports_recycling/mapScreen.dart';
@@ -34,13 +33,23 @@ Future<void> main() async {
     ),
   );
 
-  deviceId = await getDeviceId();
+  FirebaseService firebaseService = RealFirebaseService();
 
-  if (await checkDeviceHasSavedInfo(deviceId)) {
+  deviceId = await firebaseService.getDeviceId();
+
+  if (await firebaseService.checkDeviceHasSavedInfo(deviceId)) {
     splashScreen = false;
     homeAddress = true;
-    notifications = (await getNotifications(deviceId))!;
-    placeIdDB = (await getPlaceId(deviceId))!;
+
+    var tempNotifications = await firebaseService.getNotifications(deviceId);
+    if (tempNotifications != null) {
+      notifications = tempNotifications;
+    }
+
+    var tempPlaceIdDB = await firebaseService.getPlaceId(deviceId);
+    if (tempPlaceIdDB != null) {
+      placeIdDB = tempPlaceIdDB;
+    }
   }
 
   // Running the app

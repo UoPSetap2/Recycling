@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+      - Alex's-Branch
+      - James'-Branch
+      - Jemima's-Branch
+  pull_request:
+    branches:
+      - main
+      - Alex's-Branch
+      - James'-Branch
+      - Jemima's-Branch
+
+jobs:
+  flutter_test:
+    name: Run flutter test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '12'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - run: flutter pub get
+        working-directory: ${{ github.workspace }}/ports_recycling
+      - run: flutter test
+        working-directory: ${{ github.workspace }}/ports_recycling
