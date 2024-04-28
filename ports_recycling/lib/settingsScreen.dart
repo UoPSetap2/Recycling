@@ -377,7 +377,7 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
 
   void searchPlaces(String query) async {
     final places =
-        GoogleMapsPlaces(apiKey: 'AIzaSyDFTy0iz-fmqTKm8wMkOYuVTgK4eEPr94c');
+        GoogleMapsPlaces(apiKey: 'AIzaSyAY5ze0DWYSopAw0ongFHOMlNx_c6VmvSA');
     PlacesAutocompleteResponse response = await places.autocomplete(
       query,
       language: 'en',
@@ -481,7 +481,7 @@ class _SwitchExampleState extends State<SwitchExample> {
 Future<Map<String, dynamic>?> selectAddress(String placeId) async {
   // I'm creating a GoogleMapsPlaces object with my API key
   final places =
-      GoogleMapsPlaces(apiKey: 'AIzaSyDFTy0iz-fmqTKm8wMkOYuVTgK4eEPr94c');
+      GoogleMapsPlaces(apiKey: 'AIzaSyAY5ze0DWYSopAw0ongFHOMlNx_c6VmvSA');
 
   // I'm using the GoogleMapsPlaces object to get the details of the place with the given ID
   PlacesDetailsResponse response = await places.getDetailsByPlaceId(placeId);
@@ -531,7 +531,7 @@ Future<Map<String, dynamic>?> selectAddress(String placeId) async {
 Future<String?> getStringAddress(String placeId) async {
   // I'm creating a GoogleMapsPlaces object with my API key
   final places =
-      GoogleMapsPlaces(apiKey: 'AIzaSyDFTy0iz-fmqTKm8wMkOYuVTgK4eEPr94c');
+      GoogleMapsPlaces(apiKey: 'AIzaSyAY5ze0DWYSopAw0ongFHOMlNx_c6VmvSA');
 
   // I'm using the GoogleMapsPlaces object to get the details of the place with the given ID
   PlacesDetailsResponse response = await places.getDetailsByPlaceId(placeId);
