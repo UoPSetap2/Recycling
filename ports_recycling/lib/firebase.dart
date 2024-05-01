@@ -25,13 +25,11 @@ abstract class FirebaseService {
   Future<bool> checkDeviceHasSavedInfo(String deviceId);
 }
 
-// Create the real implementation
 class RealFirebaseService implements FirebaseService {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   @override
   Future<List<Marker>> getMarkersFromFirestore() async {
-    // Your existing implementation goes here
     CollectionReference recyclingPoints =
         firestore.collection('RecyclingPoints');
     QuerySnapshot querySnapshot = await recyclingPoints.get();
